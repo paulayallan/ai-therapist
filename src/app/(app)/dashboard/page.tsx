@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getCurrentUser, getInsights, getJournalEntries, getMentalProfile, getMoodLogs, buildDashboardSummary } from "@/lib/data";
+import { getCurrentUser, getInsights, getJournalEntries, getMentalProfile, getMoodLogs, getSubscription, hasProAccess, buildDashboardSummary } from "@/lib/data";
 import { formatDate } from "@/lib/utils";
 import { MoodLogger } from "@/components/mood-logger";
 import { SectionHeading } from "@/components/section-heading";
@@ -10,21 +10,23 @@ export default async function DashboardPage() {
   const user = await getCurrentUser();
   const userId = user?.id ?? "demo-user";
 
-  const [profile, moodLogs, journalEntries, insights] = await Promise.all([
+  const [profile, moodLogs, journalEntries, insights, subscription] = await Promise.all([
     getMentalProfile(userId),
     getMoodLogs(userId),
     getJournalEntries(userId),
-    getInsights(userId)
+    getInsights(userId),
+    getSubscription(userId)
   ]);
 
   const summary = buildDashboardSummary(moodLogs, journalEntries);
+  const proAccess = hasProAccess(subscription);
 
   return (
     <div className="space-y-6">
       <SectionHeading
         eyebrow="Dashboard"
-        title="A steadier place to check in"
-        description="Track daily state, review patterns, and move into structured support tools."
+        title="Daily support first, deeper insight when you want it"
+        description="Use Daily Support when you need calm and clarity now. Open Deep Insights when you want pattern analysis."
       />
       <div className="grid gap-4 md:grid-cols-4">
         <StatCard label="Average mood" value={`${summary.avgMood}/10`} />
@@ -38,21 +40,42 @@ export default async function DashboardPage() {
           <Card>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="font-display text-3xl text-ink">Quick actions</p>
-                <p className="mt-2 text-sm text-pine/70">Choose the kind of support you need right now.</p>
+                <p className="font-display text-3xl text-ink">Two clear modes</p>
+                <p className="mt-2 text-sm text-pine/70">Daily Support for right now. Deep Insights for longer-term pattern reads.</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Link href="/coach"><Button>Open coach</Button></Link>
+                <Link href="/coach"><Button>Daily Support</Button></Link>
                 <Link href="/sos"><Button variant="danger">SOS mode</Button></Link>
-                <Link href="/journal"><Button variant="secondary">Journal</Button></Link>
+                <Link href="/insights"><Button variant="secondary">Deep Insights</Button></Link>
               </div>
             </div>
           </Card>
 
+          <div className="grid gap-4 md:grid-cols-3">
+            <LaneCard
+              title="Daily Support"
+              description="Fast, warm support for anxiety, overthinking, stress spikes, and emotional resets."
+              href="/coach"
+              cta="Open Daily Support"
+            />
+            <LaneCard
+              title="Deep Insights"
+              description="Optional pattern analysis when you want to understand recurring loops across mood, journaling, and support."
+              href="/insights"
+              cta="Open Deep Insights"
+            />
+            <LaneCard
+              title="Strategy"
+              description="Use the premium layer for decisions, relationship analysis, and life planning."
+              href="/strategy"
+              cta={proAccess ? "Open strategy" : "Unlock strategy"}
+            />
+          </div>
+
           <MoodLogger />
 
           <Card>
-            <p className="font-display text-2xl text-ink">Recent insights</p>
+            <p className="font-display text-2xl text-ink">Recent psychological signals</p>
             <div className="mt-4 space-y-3">
               {insights.slice(0, 3).map((insight) => (
                 <div key={insight.id} className="rounded-[22px] bg-sand/70 p-4">
@@ -66,10 +89,24 @@ export default async function DashboardPage() {
 
         <div className="space-y-6">
           <Card className="bg-pine text-white">
-            <p className="font-display text-2xl">Profile snapshot</p>
+            <p className="font-display text-2xl">Psychology OS snapshot</p>
+            <p className="mt-2 text-sm text-white/80">Plan: {subscription.plan.toUpperCase()}</p>
             <p className="mt-3 text-sm text-white/80">Focus areas: {profile?.mainChallenges.join(", ") || "Not set yet"}</p>
             <p className="mt-2 text-sm text-white/80">Goals: {profile?.goals.join(", ") || "Not set yet"}</p>
             <p className="mt-2 text-sm text-white/80">Common triggers: {profile?.triggers.join(", ") || "Not set yet"}</p>
+          </Card>
+
+          <Card>
+            <p className="font-display text-2xl text-ink">Upgrade path</p>
+            <p className="mt-2 text-sm text-pine/70">
+              Free is for support, journaling, mood logs, SOS, and weekly insights. The next layer is deep pattern
+              analysis, decision-making, social coaching, burnout optimization, and long-range life strategy.
+            </p>
+            {!proAccess ? (
+              <Link href="/upgrade" className="mt-4 inline-block">
+                <Button>See pro plans</Button>
+              </Link>
+            ) : null}
           </Card>
 
           <Card>
@@ -104,6 +141,28 @@ function StatCard({ label, value }: { label: string; value: string }) {
     <Card>
       <p className="text-sm text-pine/60">{label}</p>
       <p className="mt-3 font-display text-4xl text-ink">{value}</p>
+    </Card>
+  );
+}
+
+function LaneCard({
+  title,
+  description,
+  href,
+  cta
+}: {
+  title: string;
+  description: string;
+  href: string;
+  cta: string;
+}) {
+  return (
+    <Card>
+      <p className="font-display text-2xl text-ink">{title}</p>
+      <p className="mt-2 text-sm text-pine/70">{description}</p>
+      <Link href={href} className="mt-4 inline-block">
+        <Button variant="secondary">{cta}</Button>
+      </Link>
     </Card>
   );
 }

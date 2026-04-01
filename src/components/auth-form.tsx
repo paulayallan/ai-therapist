@@ -12,12 +12,14 @@ export function AuthForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setNotice(null);
     setLoading(true);
 
     const supabase = createSupabaseBrowserClient();
@@ -36,6 +38,12 @@ export function AuthForm() {
 
     if (response.error) {
       setError(response.error.message);
+      return;
+    }
+
+    if (mode === "signup" && !response.data.session) {
+      setNotice("Account created. Check your email to confirm your sign-up, then log in.");
+      setMode("login");
       return;
     }
 
@@ -75,11 +83,20 @@ export function AuthForm() {
           />
         </label>
         {error ? <p className="text-sm text-coral">{error}</p> : null}
+        {notice ? <p className="text-sm text-pine">{notice}</p> : null}
         <Button className="w-full" disabled={loading}>
           {loading ? "Please wait..." : mode === "signup" ? "Create account" : "Log in"}
         </Button>
       </form>
-      <button className="mt-5 text-sm text-pine" onClick={() => setMode(mode === "signup" ? "login" : "signup")} type="button">
+      <button
+        className="mt-5 text-sm text-pine"
+        onClick={() => {
+          setError(null);
+          setNotice(null);
+          setMode(mode === "signup" ? "login" : "signup");
+        }}
+        type="button"
+      >
         {mode === "signup" ? "Already have an account? Log in" : "Need an account? Sign up"}
       </button>
     </Card>

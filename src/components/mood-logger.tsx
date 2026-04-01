@@ -15,6 +15,8 @@ const sliderLabels: Array<{ key: SliderKey; label: string }> = [
   { key: "sleepQuality", label: "Sleep" }
 ];
 
+const moodCacheKey = "mentara:mood:recent:v1";
+
 export function MoodLogger() {
   const [values, setValues] = useState({
     mood: 6,
@@ -34,7 +36,18 @@ export function MoodLogger() {
   async function submitMood(event: FormEvent) {
     event.preventDefault();
     setSaving(true);
-    setMessage(null);
+    setMessage("Saved locally. Syncing...");
+
+    if (typeof window !== "undefined") {
+      const cached = window.localStorage.getItem(moodCacheKey);
+      const payload = {
+        ...values,
+        notes,
+        createdAt: new Date().toISOString()
+      };
+      const next = cached ? [payload, ...((JSON.parse(cached) as typeof payload[]) ?? [])] : [payload];
+      window.localStorage.setItem(moodCacheKey, JSON.stringify(next.slice(0, 20)));
+    }
 
     const response = await fetch("/api/mood", {
       method: "POST",
@@ -43,7 +56,10 @@ export function MoodLogger() {
     });
 
     setSaving(false);
-    setMessage(response.ok ? "Mood saved." : "Could not save mood log.");
+    setMessage(response.ok ? "Mood saved." : "Saved locally. Could not sync right now.");
+    if (response.ok) {
+      setNotes("");
+    }
   }
 
   return (

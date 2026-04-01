@@ -1,5 +1,5 @@
 {
-  "name": "ai-therapist",
+  "name": "mentara",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -7,9 +7,18 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "cap:sync": "npx cap sync",
+    "ios:add": "npx cap add ios",
+    "ios:sync": "npx cap sync ios",
+    "ios:sync:release": "npm run ios:sync",
+    "ios:open": "npx cap open ios"
   },
   "dependencies": {
+    "@capacitor/cli": "^8.3.0",
+    "@capacitor/core": "^8.3.0",
+    "@capacitor/ios": "^8.3.0",
+    "@revenuecat/purchases-capacitor": "^12.3.0",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.49.1",
     "clsx": "^2.1.1",

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { upsertAccountMemory } from "@/lib/memory";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const moodSchema = z.object({
@@ -43,6 +44,15 @@ export async function POST(request: Request) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  await upsertAccountMemory(supabase, user.id, {
+    displayName: user.user_metadata?.full_name || user.email?.split("@")[0] || "user",
+    lastMood: payload.data.mood,
+    lastAnxietyLevel: payload.data.anxietyLevel,
+    lastStressLevel: payload.data.stress,
+    lastSleepQuality: payload.data.sleepQuality,
+    memorySnippet: payload.data.notes || `Latest mood check-in: mood ${payload.data.mood}/10, anxiety ${payload.data.anxietyLevel}/10, stress ${payload.data.stress}/10.`
+  });
 
   return NextResponse.json({ ok: true });
 }

@@ -8,30 +8,27 @@ import { formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
-type RecognitionResult = {
-  0: { transcript: string };
-};
-
-type RecognitionEvent = {
-  results: RecognitionResult[];
-};
-
-type BrowserSpeechRecognition = {
-  lang: string;
-  interimResults: boolean;
-  continuous: boolean;
-  onresult: ((event: RecognitionEvent) => void) | null;
-  onend: (() => void) | null;
-  start: () => void;
-  stop: () => void;
-};
-
-type SpeechRecognitionCtor = new () => BrowserSpeechRecognition;
-
 declare global {
-  interface Window {
-    SpeechRecognition?: SpeechRecognitionCtor;
-    webkitSpeechRecognition?: SpeechRecognitionCtor;
+  interface SpeechRecognition extends EventTarget {
+    continuous: boolean;
+    interimResults: boolean;
+    lang: string;
+    onresult: ((event: SpeechRecognitionEvent) => void) | null;
+    onend: (() => void) | null;
+    start(): void;
+    stop(): void;
+  }
+
+  interface SpeechRecognitionEvent {
+    results: {
+      length: number;
+      [index: number]: {
+        length: number;
+        [index: number]: {
+          transcript: string;
+        };
+      };
+    };
   }
 }
 
@@ -40,10 +37,19 @@ export function JournalClient({ entries }: { entries: JournalEntry[] }) {
   const [analysis, setAnalysis] = useState<JournalEntry["emotionalAnalysis"] | null>(null);
   const [saving, setSaving] = useState(false);
   const [recording, setRecording] = useState(false);
-  const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [localEntries, setLocalEntries] = useState<JournalEntry[]>(entries);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const browserWindow =
+    typeof window === "undefined"
+      ? null
+      : (window as Window & {
+          SpeechRecognition?: new () => SpeechRecognition;
+          webkitSpeechRecognition?: new () => SpeechRecognition;
+        });
 
   const speechSupported = useMemo(
-    () => typeof window !== "undefined" && Boolean(window.SpeechRecognition || window.webkitSpeechRecognition),
+    () => Boolean(browserWindow?.SpeechRecognition || browserWindow?.webkitSpeechRecognition),
     []
   );
 
@@ -56,7 +62,7 @@ export function JournalClient({ entries }: { entries: JournalEntry[] }) {
       return;
     }
 
-    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const Recognition = browserWindow?.SpeechRecognition || browserWindow?.webkitSpeechRecognition;
     if (!Recognition) return;
 
     const recognition = new Recognition();
@@ -79,11 +85,23 @@ export function JournalClient({ entries }: { entries: JournalEntry[] }) {
     event.preventDefault();
     if (!text.trim()) return;
 
+    const textToSave = text.trim();
+    const optimisticEntry: JournalEntry = {
+      id: `temp-${Date.now()}`,
+      textContent: textToSave,
+      voiceUrl: null,
+      emotionalAnalysis: null,
+      createdAt: new Date().toISOString()
+    };
+
+    setLocalEntries((current) => [optimisticEntry, ...current]);
+    setText("");
+    setSaveMessage("Saved locally. Syncing...");
     setSaving(true);
     const response = await fetch("/api/journal", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ textContent: text })
+      body: JSON.stringify({ textContent: textToSave })
     });
 
     const data = await response.json().catch(() => null);
@@ -91,9 +109,18 @@ export function JournalClient({ entries }: { entries: JournalEntry[] }) {
 
     if (response.ok && data) {
       setAnalysis(data.entry?.emotionalAnalysis ?? null);
-      setText("");
-      window.location.reload();
+      setLocalEntries((current) => {
+        const withoutTemp = current.filter((entry) => entry.id !== optimisticEntry.id);
+        if (!data.entry) return withoutTemp;
+        return [data.entry as JournalEntry, ...withoutTemp];
+      });
+      setSaveMessage("Entry saved.");
+      return;
     }
+
+    setLocalEntries((current) => current.filter((entry) => entry.id !== optimisticEntry.id));
+    setText(textToSave);
+    setSaveMessage("Saved locally. Could not sync right now.");
   }
 
   return (
@@ -117,6 +144,7 @@ export function JournalClient({ entries }: { entries: JournalEntry[] }) {
             </Button>
             <Button disabled={saving}>{saving ? "Saving..." : "Save entry"}</Button>
           </div>
+          {saveMessage ? <p className="text-sm text-pine">{saveMessage}</p> : null}
         </form>
         {analysis ? (
           <div className="mt-6 rounded-[24px] bg-mist/70 p-5 text-sm">
@@ -128,8 +156,8 @@ export function JournalClient({ entries }: { entries: JournalEntry[] }) {
       <Card>
         <p className="font-display text-2xl text-ink">Recent entries</p>
         <div className="mt-5 space-y-4">
-          {entries.length ? (
-            entries.map((entry) => (
+          {localEntries.length ? (
+            localEntries.map((entry) => (
               <div key={entry.id} className="rounded-[24px] bg-sand/70 p-4">
                 <p className="text-xs uppercase tracking-[0.24em] text-pine/60">{formatDate(entry.createdAt)}</p>
                 <p className="mt-2 text-sm text-ink">{entry.textContent}</p>

@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AI Therapist",
-  description: "Science-based mental health support with CBT coaching, journaling, mood tracking, and SOS tools."
+  title: "Mentara",
+  description: "Science-based mental support with CBT coaching, journaling, mood tracking, and SOS tools."
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

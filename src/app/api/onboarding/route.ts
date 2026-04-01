@@ -1,15 +1,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { upsertAccountMemory } from "@/lib/memory";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const onboardingSchema = z.object({
-  mainChallenges: z.array(z.string()).min(1),
-  stressLevel: z.number().min(1).max(10),
-  sleepQuality: z.number().min(1).max(10),
-  triggers: z.array(z.string()),
-  copingMethods: z.array(z.string()),
-  goals: z.array(z.string()),
-  therapyExperience: z.string()
+  bringsYouHere: z.array(z.string()).min(1),
+  currentMood: z.number().min(1).max(10),
+  therapistStyle: z.enum(["Calm Listener", "Practical Coach", "Deep Psychologist", "Motivational Guide"])
 });
 
 export async function POST(request: Request) {
@@ -32,20 +29,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { error } = await supabase.from("mental_profiles").upsert({
-    user_id: user.id,
-    main_challenges: payload.data.mainChallenges,
-    stress_level: payload.data.stressLevel,
-    sleep_quality: payload.data.sleepQuality,
-    triggers: payload.data.triggers,
-    coping_methods: payload.data.copingMethods,
-    goals: payload.data.goals,
-    therapy_experience: payload.data.therapyExperience
-  });
+  const { error } = await supabase.from("mental_profiles").upsert(
+    {
+      user_id: user.id,
+      brings_you_here: payload.data.bringsYouHere,
+      current_mood: payload.data.currentMood,
+      therapist_style: payload.data.therapistStyle,
+      main_challenges: payload.data.bringsYouHere.map((reason) => reason.toLowerCase())
+    },
+    {
+      onConflict: "user_id"
+    }
+  );
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  await upsertAccountMemory(supabase, user.id, {
+    displayName: user.user_metadata?.full_name || user.email?.split("@")[0] || "user",
+    bringsYouHere: payload.data.bringsYouHere,
+    therapistStyle: payload.data.therapistStyle
+  });
 
   return NextResponse.json({ ok: true });
 }

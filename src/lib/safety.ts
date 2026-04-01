@@ -8,8 +8,23 @@ const crisisPatterns = [
   /overdose/i
 ];
 
+const panicPatterns = [
+  /\bpanic attack\b/i,
+  /\bi'?m panicking\b/i,
+  /\bi am panicking\b/i,
+  /\bcan'?t breathe\b/i,
+  /\bheart is racing\b/i,
+  /\bchest feels tight\b/i,
+  /\bfreaking out\b/i,
+  /\bspiraling\b/i
+];
+
 export function detectCrisisLanguage(text: string) {
   return crisisPatterns.some((pattern) => pattern.test(text));
+}
+
+export function detectPanicLanguage(text: string) {
+  return panicPatterns.some((pattern) => pattern.test(text));
 }
 
 export function getCrisisResources() {

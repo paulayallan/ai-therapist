@@ -1,28 +1,27 @@
 "use client";
 
-import type { FormEvent, ReactNode } from "react";
+import type { FormEvent } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
-const challengeOptions = ["anxiety", "stress", "panic", "overthinking", "burnout", "emotional regulation"];
-const goalOptions = ["calm mind", "reduce panic", "improve resilience", "sleep better", "feel more grounded"];
+const bringYouHereOptions = ["Anxiety", "Stress", "Relationships", "Work", "Loneliness", "Just want to talk"] as const;
+const therapistStyles = ["Calm Listener", "Practical Coach", "Deep Psychologist", "Motivational Guide"] as const;
 
 export function OnboardingForm() {
-  const [mainChallenges, setMainChallenges] = useState<string[]>(["anxiety", "overthinking"]);
-  const [stressLevel, setStressLevel] = useState(6);
-  const [sleepQuality, setSleepQuality] = useState(5);
-  const [triggers, setTriggers] = useState("work deadlines, uncertainty, conflict");
-  const [copingMethods, setCopingMethods] = useState("walking, music, breathing");
-  const [goals, setGoals] = useState<string[]>(["calm mind", "reduce panic"]);
-  const [therapyExperience, setTherapyExperience] = useState("Some prior therapy");
+  const [step, setStep] = useState(1);
+  const [bringsYouHere, setBringsYouHere] = useState<string[]>(["Anxiety"]);
+  const [currentMood, setCurrentMood] = useState(6);
+  const [therapistStyle, setTherapistStyle] = useState<(typeof therapistStyles)[number]>("Practical Coach");
   const [saving, setSaving] = useState(false);
+  const [completed, setCompleted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  function toggleValue(value: string, current: string[], setter: (values: string[]) => void) {
-    setter(current.includes(value) ? current.filter((item) => item !== value) : [...current, value]);
+  function toggleReason(reason: string) {
+    setBringsYouHere((current) => (current.includes(reason) ? current.filter((item) => item !== reason) : [...current, reason]));
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -34,13 +33,9 @@ export function OnboardingForm() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        mainChallenges,
-        stressLevel,
-        sleepQuality,
-        triggers: triggers.split(",").map((item) => item.trim()).filter(Boolean),
-        copingMethods: copingMethods.split(",").map((item) => item.trim()).filter(Boolean),
-        goals,
-        therapyExperience
+        bringsYouHere,
+        currentMood,
+        therapistStyle
       })
     });
 
@@ -48,142 +43,127 @@ export function OnboardingForm() {
 
     if (!response.ok) {
       const data = await response.json().catch(() => null);
-      setError(data?.error ?? "Unable to save your profile.");
+      setError(data?.error ?? "Unable to save your onboarding.");
       return;
     }
 
-    router.push("/dashboard");
-    router.refresh();
+    setCompleted(true);
+    setTimeout(() => {
+      router.push("/coach");
+      router.refresh();
+    }, 1000);
+  }
+
+  if (completed) {
+    return (
+      <Card className="max-w-3xl">
+        <div className="flex flex-col items-center justify-center py-14 text-center">
+          <CheckCircle2 className="h-12 w-12 text-pine" />
+          <h1 className="mt-5 font-display text-4xl text-ink">You’re set</h1>
+          <p className="mt-3 max-w-xl text-sm text-pine/70">
+            Your support style, current mood, and starting context have been saved. Opening your first support session now.
+          </p>
+        </div>
+      </Card>
+    );
   }
 
   return (
     <Card className="max-w-3xl">
       <div className="mb-6">
-        <p className="text-xs uppercase tracking-[0.24em] text-pine/60">Personalization</p>
-        <h1 className="mt-2 font-display text-4xl text-ink">Build your mental health profile</h1>
-        <p className="mt-2 text-sm text-pine/70">
-          Your answers guide tone, exercises, and insight generation. This does not create a diagnosis.
-        </p>
+        <p className="text-xs uppercase tracking-[0.24em] text-pine/60">Onboarding</p>
+        <h1 className="mt-2 font-display text-4xl text-ink">Set the tone before the first therapy session</h1>
+        <p className="mt-2 text-sm text-pine/70">Three quick steps so the app knows what kind of support to give you.</p>
       </div>
-      <form className="space-y-6" onSubmit={handleSubmit}>
-        <fieldset>
-          <legend className="mb-3 text-sm font-medium text-ink">Primary challenges</legend>
-          <div className="flex flex-wrap gap-2">
-            {challengeOptions.map((option) => (
-              <Chip
-                key={option}
-                active={mainChallenges.includes(option)}
-                onClick={() => toggleValue(option, mainChallenges, setMainChallenges)}
-              >
-                {option}
-              </Chip>
-            ))}
+
+      <div className="mb-8 flex gap-3">
+        {[1, 2, 3].map((item) => (
+          <div key={item} className={`h-2 flex-1 rounded-full ${item <= step ? "bg-pine" : "bg-sand"}`} />
+        ))}
+      </div>
+
+      <form className="space-y-8" onSubmit={handleSubmit}>
+        {step === 1 ? (
+          <div>
+            <p className="font-display text-3xl text-ink">What brings you here today?</p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              {bringYouHereOptions.map((option) => (
+                <button
+                  key={option}
+                  className={`rounded-full px-5 py-3 text-sm transition ${bringsYouHere.includes(option) ? "bg-pine text-white" : "bg-sand text-ink"}`}
+                  type="button"
+                  onClick={() => toggleReason(option)}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
           </div>
-        </fieldset>
+        ) : null}
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <SliderInput label="Current stress level" value={stressLevel} onChange={setStressLevel} />
-          <SliderInput label="Sleep quality" value={sleepQuality} onChange={setSleepQuality} />
-        </div>
-
-        <TextInput
-          label="Common triggers"
-          value={triggers}
-          onChange={setTriggers}
-          placeholder="Comma-separated examples"
-        />
-        <TextInput
-          label="Current coping habits"
-          value={copingMethods}
-          onChange={setCopingMethods}
-          placeholder="Comma-separated examples"
-        />
-
-        <fieldset>
-          <legend className="mb-3 text-sm font-medium text-ink">Goals</legend>
-          <div className="flex flex-wrap gap-2">
-            {goalOptions.map((option) => (
-              <Chip key={option} active={goals.includes(option)} onClick={() => toggleValue(option, goals, setGoals)}>
-                {option}
-              </Chip>
-            ))}
+        {step === 2 ? (
+          <div>
+            <p className="font-display text-3xl text-ink">How are you feeling right now?</p>
+            <div className="mt-6 rounded-[28px] bg-sand/70 p-6">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-pine/70">Low</span>
+                <span className="font-display text-5xl text-ink">{currentMood}</span>
+                <span className="text-sm text-pine/70">High</span>
+              </div>
+              <input
+                className="mt-5 w-full"
+                type="range"
+                min={1}
+                max={10}
+                value={currentMood}
+                onChange={(event) => setCurrentMood(Number(event.target.value))}
+              />
+            </div>
           </div>
-        </fieldset>
+        ) : null}
 
-        <TextInput
-          label="Therapy experience"
-          value={therapyExperience}
-          onChange={setTherapyExperience}
-          placeholder="Optional context for personalization"
-        />
+        {step === 3 ? (
+          <div>
+            <p className="font-display text-3xl text-ink">Choose therapist style</p>
+            <div className="mt-5 grid gap-3 md:grid-cols-2">
+              {therapistStyles.map((style) => (
+                <button
+                  key={style}
+                  className={`rounded-[24px] border p-5 text-left transition ${therapistStyle === style ? "border-pine bg-pine text-white" : "border-pine/10 bg-white text-ink"}`}
+                  type="button"
+                  onClick={() => setTherapistStyle(style)}
+                >
+                  <p className="font-medium">{style}</p>
+                  <p className={`mt-2 text-sm ${therapistStyle === style ? "text-white/80" : "text-pine/70"}`}>
+                    {style === "Calm Listener"
+                      ? "Gentle, validating, and steady."
+                      : style === "Practical Coach"
+                        ? "Direct, structured, and action-oriented."
+                        : style === "Deep Psychologist"
+                          ? "Insightful, pattern-focused, and reflective."
+                          : "Encouraging, energizing, and future-facing."}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         {error ? <p className="text-sm text-coral">{error}</p> : null}
-        <Button disabled={saving}>{saving ? "Saving..." : "Complete onboarding"}</Button>
+
+        <div className="flex items-center justify-between">
+          <Button type="button" variant="ghost" disabled={step === 1 || saving} onClick={() => setStep((current) => current - 1)}>
+            Back
+          </Button>
+          {step < 3 ? (
+            <Button type="button" disabled={(step === 1 && !bringsYouHere.length) || saving} onClick={() => setStep((current) => current + 1)}>
+              Continue
+            </Button>
+          ) : (
+            <Button disabled={saving}>{saving ? "Saving..." : "Start first session"}</Button>
+          )}
+        </div>
       </form>
     </Card>
-  );
-}
-
-function Chip({
-  children,
-  active,
-  onClick
-}: {
-  children: ReactNode;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      className={`rounded-full px-4 py-2 text-sm transition ${active ? "bg-pine text-white" : "bg-sand text-ink"}`}
-      type="button"
-      onClick={onClick}
-    >
-      {children}
-    </button>
-  );
-}
-
-function SliderInput({
-  label,
-  value,
-  onChange
-}: {
-  label: string;
-  value: number;
-  onChange: (value: number) => void;
-}) {
-  return (
-    <label className="block rounded-[24px] bg-sand/70 p-4">
-      <span className="text-sm text-ink">{label}</span>
-      <div className="mt-3 flex items-center gap-3">
-        <input className="w-full" type="range" min={1} max={10} value={value} onChange={(e) => onChange(Number(e.target.value))} />
-        <span className="w-8 text-right text-sm text-pine">{value}</span>
-      </div>
-    </label>
-  );
-}
-
-function TextInput({
-  label,
-  value,
-  onChange,
-  placeholder
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-}) {
-  return (
-    <label className="block">
-      <span className="mb-2 block text-sm text-ink">{label}</span>
-      <input
-        className="w-full rounded-2xl border border-pine/15 bg-sand/70 px-4 py-3 outline-none focus:border-pine"
-        value={value}
-        placeholder={placeholder}
-        onChange={(event) => onChange(event.target.value)}
-      />
-    </label>
   );
 }

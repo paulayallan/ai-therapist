@@ -1,15 +1,19 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Brain, HeartPulse, LayoutDashboard, NotebookPen, Sparkles, Wind } from "lucide-react";
+import { Bot, Brain, Compass, HeartPulse, LayoutDashboard, NotebookPen, Settings, Sparkles, Wind } from "lucide-react";
+import { LogoutButton } from "@/components/logout-button";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/coach", label: "Coach", icon: Brain },
+  { href: "/coach", label: "Support", icon: Brain },
   { href: "/sos", label: "SOS", icon: HeartPulse },
   { href: "/journal", label: "Journal", icon: NotebookPen },
-  { href: "/insights", label: "Insights", icon: Sparkles },
-  { href: "/tools", label: "Tools", icon: Wind }
+  { href: "/insights", label: "Deep Insights", icon: Sparkles },
+  { href: "/strategy", label: "Strategy", icon: Compass },
+  { href: "/twin", label: "My AI Twin", icon: Bot },
+  { href: "/tools", label: "Tools", icon: Wind },
+  { href: "/settings", label: "Settings", icon: Settings }
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -18,8 +22,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="mx-auto flex min-h-screen max-w-7xl flex-col px-4 py-6 lg:flex-row lg:gap-6">
         <aside className="mb-6 rounded-[32px] border border-pine/10 bg-white/60 p-5 backdrop-blur lg:mb-0 lg:w-72">
           <Link href="/" className="mb-8 block">
-            <p className="font-display text-2xl text-ink">AI Therapist</p>
-            <p className="mt-1 text-sm text-pine/70">Science-based mental health support</p>
+            <p className="font-display text-2xl text-ink">Mentara</p>
+            <p className="mt-1 text-sm text-pine/70">Support first. Psychology OS over time.</p>
           </Link>
           <nav className="space-y-2">
             {navItems.map((item) => {
@@ -37,15 +41,23 @@ export function AppShell({ children }: { children: ReactNode }) {
             })}
           </nav>
           <div className="mt-8 rounded-[24px] bg-pine p-5 text-white">
-            <p className="font-display text-xl">Safety first</p>
+            <p className="font-display text-xl">Free + Pro model</p>
             <p className="mt-2 text-sm text-white/80">
-              This app supports reflection and coping skills. It does not replace therapy or emergency care.
+              Free gives users 24/7 support, SOS tools, journaling, mood check-ins, and weekly insight snapshots. Strategy is Pro. My AI Twin is the premium memory layer.
             </p>
-            <Link href="/sos" className="mt-4 inline-block">
+            <Link href="/strategy" className="mt-4 inline-block">
               <Button variant="secondary" className="w-full">
-                Open SOS mode
+                Open Strategy OS
               </Button>
             </Link>
+            <Link href="/upgrade" className="mt-3 inline-block w-full">
+              <Button variant="ghost" className="w-full border border-white/20 text-white hover:bg-white/10">
+                View plans
+              </Button>
+            </Link>
+          </div>
+          <div className="mt-4">
+            <LogoutButton />
           </div>
         </aside>
         <main className="flex-1">{children}</main>
