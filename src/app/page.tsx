@@ -25,7 +25,7 @@ const pillars = [
 
 export default function LandingPage() {
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,_#edf5f2_0%,_#f6f0e8_100%)] px-4 py-6 md:px-8">
+    <main className="safe-top-layout min-h-screen bg-[linear-gradient(180deg,_#edf5f2_0%,_#f6f0e8_100%)] px-4 py-6 md:px-8">
       <div className="mx-auto max-w-7xl">
         <LandingHero />
 

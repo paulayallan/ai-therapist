@@ -20,7 +20,7 @@ const navItems = [
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(124,162,147,0.28),_transparent_32%),linear-gradient(180deg,_#f6f0e8_0%,_#edf5f2_100%)]">
-      <div className="mx-auto flex min-h-screen max-w-7xl flex-col px-3 py-4 sm:px-4 sm:py-6 lg:flex-row lg:gap-6">
+      <div className="safe-top-layout mx-auto flex min-h-screen max-w-7xl flex-col px-3 py-4 sm:px-4 sm:py-6 lg:flex-row lg:gap-6">
         <aside className="hidden rounded-[32px] border border-pine/10 bg-white/60 p-5 backdrop-blur lg:mb-0 lg:block lg:w-72">
           <Link href="/" className="mb-8 block">
             <p className="font-display text-2xl text-ink">Mentara</p>
