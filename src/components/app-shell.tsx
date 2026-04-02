@@ -61,19 +61,6 @@ export function AppShell({ children }: { children: ReactNode }) {
             <LogoutButton />
           </div>
         </aside>
-        <div className="mb-4 rounded-[24px] border border-pine/10 bg-white/75 p-4 backdrop-blur lg:hidden">
-          <Link href="/" className="block">
-            <p className="font-display text-2xl text-ink">Mentara</p>
-            <p className="mt-1 text-sm text-pine/70">Calm support for real life.</p>
-          </Link>
-          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-            <Link href="/coach"><Button className="whitespace-nowrap">Daily Support</Button></Link>
-            <Link href="/sos"><Button variant="danger" className="whitespace-nowrap">SOS</Button></Link>
-            <Link href="/journal"><Button variant="secondary" className="whitespace-nowrap">Journal</Button></Link>
-            <Link href="/insights"><Button variant="secondary" className="whitespace-nowrap">Insights</Button></Link>
-            <Link href="/settings"><Button variant="ghost" className="whitespace-nowrap">Settings</Button></Link>
-          </div>
-        </div>
         <main className="flex-1 pb-24 lg:pb-0">{children}</main>
       </div>
       <MobileTabBar />
