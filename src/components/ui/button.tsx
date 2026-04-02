@@ -11,7 +11,7 @@ export function Button({ className, variant = "primary", children, ...props }: B
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-medium transition",
+        "inline-flex min-h-11 items-center justify-center rounded-full px-4 py-2.5 text-sm font-medium transition sm:min-h-10 sm:py-2",
         variant === "primary" && "bg-pine text-white hover:bg-ink",
         variant === "secondary" && "bg-white/80 text-ink ring-1 ring-pine/10 hover:bg-white",
         variant === "ghost" && "bg-transparent text-pine hover:bg-pine/5",
