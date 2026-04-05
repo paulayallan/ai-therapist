@@ -36,12 +36,9 @@ export async function POST(request: Request) {
   }
 
   const supabase = await createSupabaseServerClient();
-  let userName = "the user";
   let memoryPrompt = "";
   let therapistStyle = "Practical Coach";
   let conversationId = payload.data.conversationId ?? null;
-  let accountMemoryTriggers: string[] = [];
-  let accountMemorySummary = "";
   let userId: string | null = null;
 
   if (supabase) {
@@ -50,10 +47,7 @@ export async function POST(request: Request) {
     if (user) {
       userId = user.id;
       const snapshot = await buildPersonalizationSnapshot(user);
-      userName = snapshot.userName;
       therapistStyle = snapshot.therapistStyle;
-      accountMemoryTriggers = snapshot.commonTriggers;
-      accountMemorySummary = snapshot.memorySummary;
       memoryPrompt = snapshot.promptContext;
 
       if (!conversationId) {
@@ -71,19 +65,12 @@ export async function POST(request: Request) {
     }
   }
 
-  const lead = buildLead({
-    userName,
-    detectedEmotion,
-    commonTriggers: accountMemoryTriggers,
-    memorySummary: accountMemorySummary
-  });
-
   if (!client) {
     const fallback =
       panicSignal
         ? "Put both feet on the floor and press them down for 10 seconds. Breathe in for 4 and out for 6, five times. Name 3 things you can see right now."
         : "Let’s keep this simple: one small step now is enough. Take five slower breaths, relax your shoulders, and tell me the hardest part of this moment.";
-    const text = `${lead} ${fallback}`.trim();
+    const text = fallback.trim();
     return new Response(text, {
       status: 200,
       headers: {
@@ -117,10 +104,8 @@ export async function POST(request: Request) {
     let assistantBody = "";
 
     try {
-      await writer.write(encoder.encode(`${lead} `));
-
       const completion = await client.chat.completions.create({
-        model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
+        model: process.env.OPENAI_MODEL || "gpt-4.1",
         stream: true,
         messages: [
           {
@@ -133,7 +118,12 @@ ${styleInstruction}
 ${panicInstruction}
 ${toolInstruction}
 
-Return plain text only (no JSON, no markdown list markers). Continue naturally after the already-written lead sentence and do not repeat it.`
+Return plain text only (no JSON, no markdown list markers).
+- Keep to 2-4 short sentences.
+- Sound human, warm, and practical.
+- Do not use the user's name unless they asked you to.
+- Do not repeat reassurance lines.
+- End with one gentle next step or question.`
           },
           { role: "user", content: payload.data.message }
         ]
@@ -146,7 +136,7 @@ Return plain text only (no JSON, no markdown list markers). Continue naturally a
         await writer.write(encoder.encode(token));
       }
 
-      const finalAssistantMessage = `${lead} ${assistantBody}`.trim();
+      const finalAssistantMessage = assistantBody.trim();
       if (supabase && userId && conversationId) {
         await supabase.from("messages").insert([
           {
@@ -166,7 +156,7 @@ Return plain text only (no JSON, no markdown list markers). Continue naturally a
         ]);
 
         await upsertAccountMemory(supabase, userId, {
-          displayName: userName,
+          displayName: "Member",
           lastDetectedEmotion: detectedEmotion,
           memorySnippet: finalAssistantMessage
         });
@@ -186,39 +176,6 @@ Return plain text only (no JSON, no markdown list markers). Continue naturally a
       "x-conversation-id": conversationId ?? ""
     }
   });
-}
-
-function buildLead({
-  userName,
-  detectedEmotion,
-  commonTriggers,
-  memorySummary
-}: {
-  userName: string;
-  detectedEmotion: "calm" | "anxious" | "sad" | "angry" | "overwhelmed";
-  commonTriggers: string[];
-  memorySummary: string;
-}) {
-  const firstName = userName && userName !== "the user" ? `${userName}, ` : "";
-  const opening =
-    detectedEmotion === "anxious"
-      ? "I can feel how activated this feels right now."
-      : detectedEmotion === "overwhelmed"
-        ? "I can feel how much is landing on you all at once."
-        : detectedEmotion === "sad"
-          ? "I can feel how heavy this is for you."
-          : detectedEmotion === "angry"
-            ? "I can feel the intensity in this moment."
-            : "I’m here with you right now.";
-
-  const trigger = commonTriggers.find((item) => item.trim().length > 0);
-  if (trigger) {
-    return `${firstName}${opening} I remember ${trigger.toLowerCase()} can be a pressure point for you.`;
-  }
-  if (memorySummary.trim()) {
-    return `${firstName}${opening} I remember this theme has been hard on you lately.`;
-  }
-  return `${firstName}${opening}`;
 }
 
 function buildStyleInstruction(

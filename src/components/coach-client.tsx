@@ -83,6 +83,8 @@ export function CoachClient() {
     }
   ]);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const messagesViewportRef = useRef<HTMLDivElement | null>(null);
+  const stickToBottomRef = useRef(true);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -112,6 +114,12 @@ export function CoachClient() {
       })
     );
   }, [conversationId, messages]);
+
+  useEffect(() => {
+    const viewport = messagesViewportRef.current;
+    if (!viewport || !stickToBottomRef.current) return;
+    viewport.scrollTop = viewport.scrollHeight;
+  }, [messages, loading]);
 
   useEffect(() => {
     const Recognition = typeof window !== "undefined" ? window.SpeechRecognition || window.webkitSpeechRecognition : undefined;
@@ -156,6 +164,7 @@ export function CoachClient() {
 
   async function sendPrompt(message: string, tool?: (typeof toolButtons)[number]["id"]) {
     if (!message.trim()) return;
+    stickToBottomRef.current = true;
 
     let assistantIndex = -1;
     setMessages((current) => {
@@ -173,16 +182,18 @@ export function CoachClient() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message, crisisFlag, conversationId, tool: tool ?? null, styleMode })
-    });
+    }).catch(() => null);
 
-    if (!response.ok || !response.body) {
-      setMessages((current) => [
-        ...current,
-        {
+    if (!response?.ok || !response.body) {
+      setMessages((current) => {
+        if (assistantIndex < 0 || assistantIndex >= current.length) return current;
+        const next = [...current];
+        next[assistantIndex] = {
           role: "assistant",
           content: "I could not generate a response right now. Try again in a moment."
-        }
-      ]);
+        };
+        return next;
+      });
       setLoading(false);
       return;
     }
@@ -210,6 +221,9 @@ export function CoachClient() {
         };
         return next;
       });
+      if (messagesViewportRef.current) {
+        messagesViewportRef.current.scrollTop = messagesViewportRef.current.scrollHeight;
+      }
     }
 
     if (!assistantText.trim()) {
@@ -303,6 +317,14 @@ export function CoachClient() {
     recognitionRef.current.start();
   }
 
+  function handleMessagesScroll() {
+    const viewport = messagesViewportRef.current;
+    if (!viewport) return;
+    const threshold = 48;
+    const distanceFromBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
+    stickToBottomRef.current = distanceFromBottom < threshold;
+  }
+
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
       <Card>
@@ -336,7 +358,11 @@ export function CoachClient() {
             );
           })}
         </div>
-        <div className="space-y-4">
+        <div
+          ref={messagesViewportRef}
+          onScroll={handleMessagesScroll}
+          className="max-h-[55vh] space-y-4 overflow-y-auto pr-1 scroll-smooth"
+        >
           {messages.map((message, index) => (
             <div
               key={`${message.role}-${index}`}

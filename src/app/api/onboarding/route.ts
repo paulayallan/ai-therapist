@@ -35,6 +35,7 @@ export async function POST(request: Request) {
       brings_you_here: payload.data.bringsYouHere,
       current_mood: payload.data.currentMood,
       therapist_style: payload.data.therapistStyle,
+      onboarding_completed: true,
       main_challenges: payload.data.bringsYouHere.map((reason) => reason.toLowerCase())
     },
     {

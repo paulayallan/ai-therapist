@@ -42,15 +42,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             })}
           </nav>
           <div className="mt-8 rounded-[24px] bg-pine p-5 text-white">
-            <p className="font-display text-xl">Free + Pro model</p>
+            <p className="font-display text-xl">Need more depth?</p>
             <p className="mt-2 text-sm text-white/80">
-              Free gives users 24/7 support, SOS tools, journaling, mood check-ins, and weekly insight snapshots. Strategy is Pro. My AI Twin is the premium memory layer.
+              Upgrade only when you need strategy planning or My AI Twin.
             </p>
-            <Link href="/strategy" className="mt-4 inline-block">
-              <Button variant="secondary" className="w-full">
-                Open Strategy OS
-              </Button>
-            </Link>
             <Link href="/upgrade" className="mt-3 inline-block w-full">
               <Button variant="ghost" className="w-full border border-white/20 text-white hover:bg-white/10">
                 View plans

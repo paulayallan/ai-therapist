@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Capacitor } from "@capacitor/core";
 import { Purchases } from "@revenuecat/purchases-capacitor";
 import type { CustomerInfo, PurchasesPackage } from "@revenuecat/purchases-capacitor";
@@ -114,6 +115,7 @@ const plans: PlanDefinition[] = [
 ];
 
 export function UpgradePricing({ currentPlan, userId }: UpgradePricingProps) {
+  const searchParams = useSearchParams();
   const [activePlan, setActivePlan] = useState<SubscriptionPlan>(currentPlan);
   const [isNativeIos, setIsNativeIos] = useState(false);
   const [isRevenueCatReady, setIsRevenueCatReady] = useState(false);
@@ -121,6 +123,14 @@ export function UpgradePricing({ currentPlan, userId }: UpgradePricingProps) {
   const [billingMessage, setBillingMessage] = useState<string | null>(null);
   const [pendingPlan, startTransition] = useTransition();
   const [pendingRestore, startRestoreTransition] = useTransition();
+
+  useEffect(() => {
+    const source = searchParams.get("source");
+    const missingPlan = searchParams.get("missing_plan");
+    if (source === "checkout" && missingPlan) {
+      setBillingMessage(`Checkout is not configured for ${getPaidPlanLabel(missingPlan as SubscriptionPlan)} yet. Add its billing URL in environment variables.`);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     let mounted = true;
@@ -156,10 +166,7 @@ export function UpgradePricing({ currentPlan, userId }: UpgradePricingProps) {
         const currentOffering = offeringsResult.current;
         const availablePackages = currentOffering?.availablePackages ?? [];
 
-        setPackagesByPlan({
-          pro: availablePackages.find((pkg) => pkg.identifier === revenueCatConfig.plans.pro.packageId),
-          premium: availablePackages.find((pkg) => pkg.identifier === revenueCatConfig.plans.premium.packageId)
-        });
+        setPackagesByPlan(resolvePackagesByPlan(availablePackages));
 
         setIsRevenueCatReady(true);
         await syncCustomerInfo(customerInfoResult.customerInfo, setActivePlan, setBillingMessage);
@@ -212,11 +219,11 @@ export function UpgradePricing({ currentPlan, userId }: UpgradePricingProps) {
       <SectionHeading
         eyebrow="Upgrade"
         title="Choose how deeply the app gets to know you"
-        description="Start with support. Upgrade for insight. Unlock your AI Twin with Premium."
+        description="Pick the layer you need right now."
       />
       <Card className="bg-sand/75">
         <p className="text-sm text-pine/75">
-          Free is your immediate support layer. Pro turns your patterns into insight. Premium makes the product feel deeply personal with My AI Twin at the center.
+          Free keeps support simple. Pro adds deeper pattern insight. Premium unlocks My AI Twin.
         </p>
         {isNativeIos ? (
           <p className="mt-3 text-sm text-pine/75">
@@ -309,12 +316,6 @@ export function UpgradePricing({ currentPlan, userId }: UpgradePricingProps) {
           </div>
         </Card>
       ) : null}
-      <Card>
-        <p className="font-display text-2xl text-ink">Product ladder</p>
-        <p className="mt-2 text-sm text-pine/70">
-          Free is for immediate support. Pro is for pattern understanding. Premium is for My AI Twin, voice sessions, and the most advanced personalization in the product.
-        </p>
-      </Card>
       <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-pine/70">
         <Link href="/privacy" className="transition hover:text-pine">
           Privacy Policy
@@ -328,6 +329,38 @@ export function UpgradePricing({ currentPlan, userId }: UpgradePricingProps) {
       </div>
     </div>
   );
+}
+
+function resolvePackagesByPlan(availablePackages: PurchasesPackage[]) {
+  const exactPro = availablePackages.find((pkg) => pkg.identifier === revenueCatConfig.plans.pro.packageId);
+  const exactPremium = availablePackages.find((pkg) => pkg.identifier === revenueCatConfig.plans.premium.packageId);
+  if (exactPro || exactPremium) {
+    return {
+      pro: exactPro,
+      premium: exactPremium
+    } satisfies Partial<Record<"pro" | "premium", PurchasesPackage>>;
+  }
+
+  const keywordPro = availablePackages.find((pkg) => {
+    const id = `${pkg.identifier} ${pkg.product.identifier}`.toLowerCase();
+    return id.includes("pro");
+  });
+  const keywordPremium = availablePackages.find((pkg) => {
+    const id = `${pkg.identifier} ${pkg.product.identifier}`.toLowerCase();
+    return id.includes("premium");
+  });
+  if (keywordPro || keywordPremium) {
+    return {
+      pro: keywordPro,
+      premium: keywordPremium
+    } satisfies Partial<Record<"pro" | "premium", PurchasesPackage>>;
+  }
+
+  const sortedByPrice = [...availablePackages].sort((a, b) => Number(a.product.price) - Number(b.product.price));
+  return {
+    pro: sortedByPrice[0],
+    premium: sortedByPrice[sortedByPrice.length - 1]
+  } satisfies Partial<Record<"pro" | "premium", PurchasesPackage>>;
 }
 
 async function syncCustomerInfo(

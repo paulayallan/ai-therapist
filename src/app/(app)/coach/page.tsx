@@ -7,7 +7,7 @@ export default function CoachPage() {
       <SectionHeading
         eyebrow="Free Support"
         title="24/7 mental support for the moments that hit now"
-        description="This is the free layer: immediate help for anxiety, stress, spirals, and emotional regulation with structured psychological guidance."
+        description="Talk naturally, get calm support, and take one next step."
       />
       <CoachClient />
     </div>

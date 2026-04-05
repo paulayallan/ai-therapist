@@ -131,7 +131,7 @@ export async function POST(request: Request) {
 
   try {
     const completion = await client.chat.completions.create({
-      model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
+      model: process.env.OPENAI_MODEL || "gpt-4.1",
       response_format: { type: "json_object" },
       messages: [
         {
@@ -161,7 +161,6 @@ ${toolInstruction}`
 
     parsed.data.natural_response = addPersonalLead({
       baseResponse: parsed.data.natural_response,
-      userName,
       detectedEmotion: parsed.data.detected_emotion,
       commonTriggers: accountMemoryTriggers,
       memorySummary: accountMemorySummary,
@@ -249,14 +248,12 @@ ${toolInstruction}`
 
 function addPersonalLead({
   baseResponse,
-  userName,
   detectedEmotion,
   commonTriggers,
   memorySummary,
   conversationId
 }: {
   baseResponse: string;
-  userName: string;
   detectedEmotion: "calm" | "anxious" | "sad" | "angry" | "overwhelmed";
   commonTriggers: string[];
   memorySummary: string;
@@ -273,9 +270,13 @@ function addPersonalLead({
     return baseResponse;
   }
 
-  const firstName = userName && userName !== "the user" ? `${userName}, ` : "";
   const mainTrigger = commonTriggers.find((item) => item.trim().length > 0);
   const seed = `${conversationId ?? "new"}:${baseResponse}:${mainTrigger ?? ""}:${memorySummary}`;
+  const shouldAddLead = Math.abs(stableHash(`${seed}:lead`)) % 4 === 0;
+  if (!shouldAddLead) {
+    return baseResponse.trim();
+  }
+
   const opening = emotionOpening(detectedEmotion, seed);
 
   if (mainTrigger) {
@@ -287,7 +288,7 @@ function addPersonalLead({
       ],
       `${seed}:trigger`
     );
-    return `${firstName}${opening} ${triggerLine} ${baseResponse}`.trim();
+    return `${opening} ${triggerLine} ${baseResponse}`.trim();
   }
 
   if (memorySummary.trim()) {
@@ -299,10 +300,10 @@ function addPersonalLead({
       ],
       `${seed}:memory`
     );
-    return `${firstName}${opening} ${memoryLine} ${baseResponse}`.trim();
+    return `${opening} ${memoryLine} ${baseResponse}`.trim();
   }
 
-  return `${firstName}${opening} ${baseResponse}`.trim();
+  return `${opening} ${baseResponse}`.trim();
 }
 
 function emotionOpening(detectedEmotion: "calm" | "anxious" | "sad" | "angry" | "overwhelmed", seed: string) {

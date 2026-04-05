@@ -21,6 +21,19 @@ export async function getCurrentUser() {
   return data.user ?? null;
 }
 
+export async function getOnboardingStatus(userId: string) {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase || userId === "demo-user") {
+    return { completed: false };
+  }
+
+  const { data, error } = await supabase.from("mental_profiles").select("onboarding_completed").eq("user_id", userId).maybeSingle();
+  if (error) {
+    return { completed: false };
+  }
+  return { completed: Boolean(data?.onboarding_completed) };
+}
+
 export async function getSubscription(userId: string): Promise<Subscription> {
   const supabase = await createSupabaseServerClient();
   if (!supabase || userId === "demo-user") {

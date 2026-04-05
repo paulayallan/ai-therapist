@@ -22,6 +22,7 @@ create table if not exists mental_profiles (
   brings_you_here text[] default '{}'::text[] not null,
   current_mood int default 5 not null,
   therapist_style text default 'Practical Coach' not null,
+  onboarding_completed boolean default false not null,
   main_challenges text[] default '{}'::text[] not null,
   stress_level int default 5 not null,
   sleep_quality int default 5 not null,

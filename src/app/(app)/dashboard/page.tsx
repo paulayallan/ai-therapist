@@ -99,8 +99,7 @@ export default async function DashboardPage() {
           <Card>
             <p className="font-display text-2xl text-ink">Upgrade path</p>
             <p className="mt-2 text-sm text-pine/70">
-              Free is for support, journaling, mood logs, SOS, and weekly insights. The next layer is deep pattern
-              analysis, decision-making, social coaching, burnout optimization, and long-range life strategy.
+              If you want deeper planning tools later, you can upgrade anytime.
             </p>
             {!proAccess ? (
               <Link href="/upgrade" className="mt-4 inline-block">

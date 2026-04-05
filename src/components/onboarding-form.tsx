@@ -12,9 +12,9 @@ const therapistStyles = ["Calm Listener", "Practical Coach", "Deep Psychologist"
 
 export function OnboardingForm() {
   const [step, setStep] = useState(1);
-  const [bringsYouHere, setBringsYouHere] = useState<string[]>(["Anxiety"]);
+  const [bringsYouHere, setBringsYouHere] = useState<string[]>([]);
   const [currentMood, setCurrentMood] = useState(6);
-  const [therapistStyle, setTherapistStyle] = useState<(typeof therapistStyles)[number]>("Practical Coach");
+  const [therapistStyle, setTherapistStyle] = useState<(typeof therapistStyles)[number] | null>(null);
   const [saving, setSaving] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,6 +26,10 @@ export function OnboardingForm() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!therapistStyle) {
+      setError("Please choose your support style before continuing.");
+      return;
+    }
     setSaving(true);
     setError(null);
 
@@ -125,6 +129,7 @@ export function OnboardingForm() {
         {step === 3 ? (
           <div>
             <p className="font-display text-3xl text-ink">Choose therapist style</p>
+            <p className="mt-2 text-sm text-pine/70">Pick the tone you want first. We only save when you confirm.</p>
             <div className="mt-5 grid gap-3 md:grid-cols-2">
               {therapistStyles.map((style) => (
                 <button
@@ -160,7 +165,7 @@ export function OnboardingForm() {
               Continue
             </Button>
           ) : (
-            <Button disabled={saving}>{saving ? "Saving..." : "Start first session"}</Button>
+            <Button disabled={saving || !therapistStyle}>{saving ? "Saving..." : "Start first session"}</Button>
           )}
         </div>
       </form>

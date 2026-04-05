@@ -47,7 +47,18 @@ export function AuthForm() {
       return;
     }
 
-    router.push("/onboarding");
+    let onboardingComplete = false;
+    try {
+      const statusResponse = await fetch("/api/onboarding/status");
+      if (statusResponse.ok) {
+        const statusPayload = (await statusResponse.json()) as { completed?: boolean };
+        onboardingComplete = Boolean(statusPayload.completed);
+      }
+    } catch {
+      onboardingComplete = false;
+    }
+
+    router.push(onboardingComplete ? "/dashboard" : "/onboarding");
     router.refresh();
   }
 
