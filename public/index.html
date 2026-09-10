@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Mentara</title>
+<style>
+:root{--paper:#faf7f2;--ink:#24211d;--muted:#6b655c;--line:#e5ded3;--clay:#b4674a;--soft:#f6ebe5}
+@media(prefers-color-scheme:dark){:root{--paper:#1a1815;--ink:#f0ece5;--muted:#a49c90;--line:#322e29;--clay:#d98f6f;--soft:#2a211d}}
+*{box-sizing:border-box}
+body{margin:0;padding:max(24px,env(safe-area-inset-top)) 20px max(24px,env(safe-area-inset-bottom));background:var(--paper);color:var(--ink);font:16px/1.6 -apple-system,system-ui,sans-serif}
+main{margin:0 auto;max-width:32rem}
+h1{font:600 1.6rem/1.25 Georgia,serif;margin:0 0 .5rem}
+p{color:var(--muted);margin:0 0 1rem}
+.card{margin-top:1.5rem;border:1px solid var(--line);border-radius:16px;background:var(--soft);padding:20px}
+.card h2{font:600 1.1rem/1.3 Georgia,serif;margin:0 0 .75rem;color:var(--clay)}
+ul{list-style:none;margin:0;padding:0}
+li{padding:.55rem 0;border-top:1px solid var(--line)}li:first-child{border-top:0}
+a{color:var(--clay);font-weight:600;text-decoration:none}
+.name{display:block;color:var(--ink);font-weight:500}
+.note{font-size:.8rem;color:var(--muted)}
+button{margin-top:1.5rem;width:100%;padding:14px;border:0;border-radius:12px;background:var(--ink);color:var(--paper);font:inherit;font-weight:600}
+.region{margin-top:1.25rem;font-size:.8rem;color:var(--muted)}
+</style></head><body><main>
+<h1>Mentara can&rsquo;t reach the internet</h1>
+<p>Your entries are safe. Everything will be here when the connection comes back.</p>
+<div class="card"><h2>If this is more than a hard moment</h2>
+<p style="margin-bottom:1rem">These lines work without internet. They are staffed by people.</p>
+<ul id="lines"></ul></div>
+<p class="region" id="region"></p>
+<button type="button" onclick="location.reload()">Try again</button>
+</main><script>
+var L={AU:{label:"Australia",lines:[["Emergency","000","If you are in immediate danger"],["Lifeline","13 11 14","24/7 crisis support"],["Beyond Blue","1300 22 4636",""],["13YARN","13 92 76","For Aboriginal and Torres Strait Islander people"]]},
+NZ:{label:"New Zealand",lines:[["Emergency","111","If you are in immediate danger"],["Need to talk?","1737","Call or text, 24/7"]]},
+US:{label:"United States",lines:[["Emergency","911","If you are in immediate danger"],["Suicide & Crisis Lifeline","988","Call or text, 24/7"]]},
+CA:{label:"Canada",lines:[["Emergency","911","If you are in immediate danger"],["Suicide Crisis Helpline","988","Call or text, 24/7"]]},
+GB:{label:"United Kingdom",lines:[["Emergency","999","If you are in immediate danger"],["Samaritans","116 123","24/7, free to call"]]},
+IE:{label:"Ireland",lines:[["Emergency","112","If you are in immediate danger"],["Samaritans","116 123","24/7, free to call"]]},
+INTL:{label:"your area",lines:[["Emergency services","Your local emergency number","If you are in immediate danger"],["Find a helpline","findahelpline.com","Lists services by country"]]}};
+function r(z){if(!z)return"INTL";if(z.indexOf("Australia/")===0)return"AU";
+if(/^Pacific\/(Auckland|Chatham)/.test(z))return"NZ";
+if(z.indexOf("America/")===0)return /Toronto|Vancouver|Edmonton|Winnipeg|Halifax|Regina|St_Johns|Whitehorse|Yellowknife|Iqaluit|Moncton/.test(z)?"CA":"US";
+if(z==="Europe/London")return"GB";if(z==="Europe/Dublin")return"IE";return"INTL"}
+var z="";try{z=Intl.DateTimeFormat().resolvedOptions().timeZone}catch(e){}
+var g=L[r(z)]||L.INTL;
+document.getElementById("lines").innerHTML=g.lines.map(function(l){
+var c=/^[0-9 ]+$/.test(l[1])?'<a href="tel:'+l[1].replace(/\s/g,"")+'">'+l[1]+"</a>":"<strong>"+l[1]+"</strong>";
+return "<li><span class='name'>"+l[0]+"</span>"+c+(l[2]?" <span class='note'>"+l[2]+"</span>":"")+"</li>"}).join("");
+document.getElementById("region").textContent="Showing lines for "+g.label+".";
+</script></body></html>
