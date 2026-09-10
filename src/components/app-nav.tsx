@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -8,25 +9,50 @@ import { PLAN_LABEL } from "@/lib/billing";
 import type { SubscriptionPlan } from "@/lib/types";
 
 /**
- * Five on the phone — more than that and the labels stop being readable.
- * Homework and Science check live in the desktop bar and on the Today screen,
- * which is where people actually reach for them.
+ * Four destinations plus More on the phone. Five icons is the ceiling before
+ * the labels stop being readable at 375px.
+ *
+ * The desktop bar can show everything, which is how Twin, Homework and Science
+ * check were reachable on a laptop and completely unreachable on a phone —
+ * they lived only in a nav that never renders below `sm`. Anything not in the
+ * four below has to be in the More sheet, or it does not exist on mobile.
  */
 const TABS = [
   { href: "/dashboard", label: "Today", icon: "sun" },
   { href: "/chat", label: "Support", icon: "chat" },
-  { href: "/tools", label: "Tools", icon: "leaf" },
   { href: "/journal", label: "Journal", icon: "pen" },
-  { href: "/insights", label: "Patterns", icon: "chart" },
+  { href: "/tools", label: "Tools", icon: "leaf" },
 ] as const;
 
 const SECONDARY = [
+  { href: "/insights", label: "Patterns" },
   { href: "/twin", label: "Twin" },
   { href: "/homework", label: "Homework" },
   { href: "/science-check", label: "Science" },
 ] as const;
 
-type IconName = (typeof TABS)[number]["icon"];
+/** What the More sheet holds on a phone. Grouped, because a flat list of
+ *  seven links is a wall. */
+const MORE_SECTIONS = [
+  {
+    label: "Explore",
+    items: [
+      { href: "/insights", label: "Patterns" },
+      { href: "/twin", label: "Your Twin" },
+      { href: "/homework", label: "Homework" },
+      { href: "/science-check", label: "Science check" },
+    ],
+  },
+  {
+    label: "Account",
+    items: [
+      { href: "/upgrade", label: "Plans" },
+      { href: "/settings", label: "Settings" },
+    ],
+  },
+] as const;
+
+type IconName = (typeof TABS)[number]["icon"] | "more";
 
 const PATHS: Record<IconName, string> = {
   sun: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM12 3v1.5M12 19.5V21M3 12h1.5M19.5 12H21M5.6 5.6l1 1M17.4 17.4l1 1M18.4 5.6l-1 1M6.6 17.4l-1 1",
@@ -34,6 +60,7 @@ const PATHS: Record<IconName, string> = {
   leaf: "M4 20c0-8 5-13 16-13 0 9-5 13-11 13a5 5 0 0 1-5-5ZM9 15c2-3 5-5 9-6",
   pen: "M4 20h4l10-10a2.8 2.8 0 0 0-4-4L4 16v4ZM13.5 6.5 17.5 10.5",
   chart: "M4 19V5M4 15.5 9.5 10l3.5 3.5L20 7",
+  more: "M5 12h.01M12 12h.01M19 12h.01",
 };
 
 function Icon({ name }: { name: IconName }) {
@@ -56,7 +83,25 @@ function Icon({ name }: { name: IconName }) {
 
 export function AppNav({ plan, trialDaysLeft }: { plan: SubscriptionPlan; trialDaysLeft: number | null }) {
   const pathname = usePathname();
+  const [moreOpen, setMoreOpen] = useState(false);
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const moreIsActive = MORE_SECTIONS.some((section) =>
+    section.items.some((item) => isActive(item.href)),
+  );
+
+  // Close on navigation, so returning to a tab never lands behind the sheet.
+  useEffect(() => setMoreOpen(false), [pathname]);
+
+  // Escape closes it. A panel that traps someone mid-panic is the last thing
+  // this app should do.
+  useEffect(() => {
+    if (!moreOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMoreOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [moreOpen]);
 
   return (
     <>
@@ -147,9 +192,50 @@ export function AppNav({ plan, trialDaysLeft }: { plan: SubscriptionPlan; trialD
         </div>
       </header>
 
+      {moreOpen ? (
+        <button
+          type="button"
+          aria-label="Close menu"
+          onClick={() => setMoreOpen(false)}
+          className="fixed inset-0 z-30 bg-ink/20 backdrop-blur-[2px] sm:hidden"
+        />
+      ) : null}
+
+      <div
+        id="more-sheet"
+        hidden={!moreOpen}
+        className="fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-40 px-3 sm:hidden"
+      >
+        <div className="rounded-2xl border border-line bg-paper p-4 shadow-lg">
+          {MORE_SECTIONS.map((section) => (
+            <div key={section.label} className="mt-4 first:mt-0">
+              <p className="label mb-2">{section.label}</p>
+              <ul className="grid grid-cols-2 gap-1">
+                {section.items.map((item) => (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      aria-current={isActive(item.href) ? "page" : undefined}
+                      className={cn(
+                        "block rounded-xl px-3 py-3 text-sm transition-colors",
+                        isActive(item.href)
+                          ? "bg-sage-soft font-medium text-sage-deep"
+                          : "text-ink hover:bg-sage-soft/60",
+                      )}
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <nav
         aria-label="Sections"
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-paper/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md sm:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-paper/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md sm:hidden"
       >
         <ul className="flex">
           {TABS.map((tab) => (
@@ -159,7 +245,7 @@ export function AppNav({ plan, trialDaysLeft }: { plan: SubscriptionPlan; trialD
                 aria-current={isActive(tab.href) ? "page" : undefined}
                 className={cn(
                   "flex flex-col items-center gap-1 py-2.5 text-[0.66rem] font-medium transition-colors",
-                  isActive(tab.href) ? "text-sage-deep" : "text-faint",
+                  isActive(tab.href) && !moreOpen ? "text-sage-deep" : "text-faint",
                 )}
               >
                 <Icon name={tab.icon} />
@@ -167,6 +253,21 @@ export function AppNav({ plan, trialDaysLeft }: { plan: SubscriptionPlan; trialD
               </Link>
             </li>
           ))}
+          <li className="flex-1">
+            <button
+              type="button"
+              onClick={() => setMoreOpen((open) => !open)}
+              aria-expanded={moreOpen}
+              aria-controls="more-sheet"
+              className={cn(
+                "flex w-full flex-col items-center gap-1 py-2.5 text-[0.66rem] font-medium transition-colors",
+                moreOpen || moreIsActive ? "text-sage-deep" : "text-faint",
+              )}
+            >
+              <Icon name="more" />
+              More
+            </button>
+          </li>
         </ul>
       </nav>
     </>

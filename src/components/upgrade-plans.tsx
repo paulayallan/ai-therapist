@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { isNativeApp } from "@/lib/native-purchases";
 import { Notice } from "@/components/ui/card";
 import type { SubscriptionPlan } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -72,13 +74,16 @@ const PLANS: {
 export function UpgradePlans({
   currentPlan,
   trialDaysLeft,
+  userId,
 }: {
   currentPlan: SubscriptionPlan;
   trialDaysLeft: number | null;
+  userId: string | null;
 }) {
   const [inNativeApp, setInNativeApp] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<SubscriptionPlan | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     /*
@@ -96,11 +101,50 @@ export function UpgradePlans({
      * when running natively; the query flag is a manual override for testing
      * the native branch from a desktop browser.
      */
-    const capacitor = (window as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
-    const native = Boolean(capacitor?.isNativePlatform?.());
     const forced = new URLSearchParams(window.location.search).get("native") === "1";
-    setInNativeApp(native || forced);
+    setInNativeApp(isNativeApp() || forced);
   }, []);
+
+  /** In-app purchase. Used instead of web checkout inside the native shell. */
+  async function buyInApp(plan: "pro" | "premium") {
+    if (!userId) {
+      setError("Sign in again before subscribing.");
+      return;
+    }
+    setBusy(plan);
+    setError(null);
+    try {
+      const { purchaseNative } = await import("@/lib/native-purchases");
+      const outcome = await purchaseNative(plan, userId);
+
+      // Silence on cancel is deliberate. Backing out of a payment is a normal
+      // decision, not an error, and it should not be answered with a warning.
+      if (outcome.status === "cancelled") return;
+      if (outcome.status === "unavailable") {
+        setError(outcome.reason);
+        return;
+      }
+      router.refresh();
+    } catch {
+      setError("That didn't complete. Nothing has been charged.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function restore() {
+    if (!userId) return;
+    setBusy("free");
+    setError(null);
+    try {
+      const { restoreNative } = await import("@/lib/native-purchases");
+      const outcome = await restoreNative(userId);
+      if (outcome.status === "purchased") router.refresh();
+      else if (outcome.status === "unavailable") setError(outcome.reason);
+    } finally {
+      setBusy(null);
+    }
+  }
 
   async function checkout(plan: "pro" | "premium") {
     setBusy(plan);
@@ -178,26 +222,46 @@ export function UpgradePlans({
 
               {plan.id !== "free" && !current ? (
                 <div className="mt-4">
-                  {inNativeApp ? (
-                    <p className="text-xs leading-relaxed text-muted">
-                      On iPhone and iPad, subscribing happens through the App Store inside the
-                      Mentara app.
-                    </p>
-                  ) : (
-                    <Button
-                      className="w-full"
-                      disabled={busy !== null}
-                      onClick={() => void checkout(plan.id as "pro" | "premium")}
-                    >
-                      {busy === plan.id ? "Opening…" : `Get ${plan.name}`}
-                    </Button>
-                  )}
+                  <Button
+                    className="w-full"
+                    disabled={busy !== null}
+                    onClick={() =>
+                      void (inNativeApp
+                        ? buyInApp(plan.id as "pro" | "premium")
+                        : checkout(plan.id as "pro" | "premium"))
+                    }
+                  >
+                    {busy === plan.id ? "Opening…" : `Get ${plan.name}`}
+                  </Button>
                 </div>
               ) : null}
             </section>
           );
         })}
       </div>
+
+      {inNativeApp ? (
+        <div className="border-t border-line pt-4">
+          {/*
+            * Apple requires a visible restore control, and an app without one
+            * is rejected. It matters beyond compliance: someone who reinstalls
+            * or moves to a new phone would otherwise look unsubscribed despite
+            * paying, and would have to ask a human to fix it.
+            */}
+          <button
+            type="button"
+            disabled={busy !== null}
+            onClick={() => void restore()}
+            className="text-sm text-sage-deep underline underline-offset-4 disabled:opacity-50"
+          >
+            {busy === "free" ? "Checking…" : "Restore a previous purchase"}
+          </button>
+          <p className="mt-2 text-xs leading-relaxed text-faint">
+            Subscriptions renew monthly and are managed in your Apple ID settings, where you can
+            also cancel.
+          </p>
+        </div>
+      ) : null}
 
       <p className="text-xs leading-relaxed text-faint">
         Paying changes how much depth you get, never whether the app will help in a crisis. The SOS

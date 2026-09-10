@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import { UpgradePlans } from "@/components/upgrade-plans";
 import { getEffectiveSubscriptionPlan, starterTrialDaysLeft } from "@/lib/billing";
 import { getSubscription } from "@/lib/data";
+import { getSessionUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Plans" };
 
 export default async function UpgradePage() {
-  const subscription = await getSubscription();
+  const [subscription, user] = await Promise.all([getSubscription(), getSessionUser()]);
 
   return (
     <div className="stack space-y-6">
@@ -22,6 +23,7 @@ export default async function UpgradePage() {
       <UpgradePlans
         currentPlan={getEffectiveSubscriptionPlan(subscription)}
         trialDaysLeft={starterTrialDaysLeft(subscription)}
+        userId={user?.id ?? null}
       />
     </div>
   );
