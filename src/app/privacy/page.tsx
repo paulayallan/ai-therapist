@@ -15,9 +15,18 @@ const SECTIONS = [
   {
     heading: "What is not stored",
     body: [
-      "No payment details — there is nothing to pay for.",
+      "No card numbers. Paid plans are handled by Apple or by our payment provider, and Mentara never sees or keeps your card details — only whether a plan is active and when it renews.",
       "No location, contacts, microphone or camera access.",
       "No advertising identifiers, and no third-party analytics or tracking pixels.",
+    ],
+  },
+  {
+    heading: "If you subscribe",
+    body: [
+      "Paying is optional. The free plan, the SOS flow, the tools and journalling all work without it.",
+      "A purchase on iPhone or iPad goes through Apple. A purchase on the web goes through our payment provider, who handles the card. Either way they tell us one thing: which plan you are on and until when.",
+      "Your subscription is joined to your account by your account ID and nothing else — never by anything you have written here.",
+      "What appears on your bank statement and on receipts is 'Mentara'. It does not describe what the app is for.",
     ],
   },
   {

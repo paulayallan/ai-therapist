@@ -56,6 +56,28 @@ export default function TermsPage() {
         </section>
 
         <section>
+          <h2 className="font-serif text-xl text-ink">Paid plans</h2>
+          <p className="mt-2.5 leading-relaxed text-muted">
+            Mentara is usable without paying. The SOS flow, the tools, check-ins and journalling
+            are on the free plan, and crisis resources are never behind a payment of any kind.
+            Pro and Premium raise the monthly limits and unlock a few extra features.
+          </p>
+          <p className="mt-2.5 leading-relaxed text-muted">
+            Subscriptions renew each month until cancelled. On iPhone or iPad, billing and
+            cancellation are handled by Apple in your device settings; on the web they are handled
+            by our payment provider, and you can cancel from the link on your receipt or by
+            emailing us. Cancelling stops the next renewal — you keep what you have paid for until
+            the end of the period you are in.
+          </p>
+          <p className="mt-2.5 leading-relaxed text-muted">
+            If a payment fails, we do not cut off access while the retry is still running. Prices
+            can change, but not for a period you have already paid for, and we will tell you
+            before a change takes effect. Nothing here limits your rights under Australian
+            Consumer Law, including a refund where those rights apply.
+          </p>
+        </section>
+
+        <section>
           <h2 className="font-serif text-xl text-ink">No warranty</h2>
           <p className="mt-2.5 leading-relaxed text-muted">
             The service is provided as it is, without guarantees of availability or of any
