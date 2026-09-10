@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+
+    --paper: 250 246 240;
+    --surface: 255 253 250;
+    --raised: 255 255 255;
+    --line: 231 223 212;
+    --ink: 41 37 33;
+    --muted: 110 102 92;
+    --faint: 150 142 131;
+
+    --sage: 92 122 107;
+    --sage-deep: 61 86 73;
+    --sage-soft: 233 240 234;
+
+    --clay: 178 88 61;
+    --clay-soft: 250 235 228;
+
+    --dusk: 104 100 140;
+    --dusk-soft: 238 237 246;
+
+    --shadow: 60 48 34;
+
+    --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+
+    --paper: 22 21 19;
+    --surface: 29 28 25;
+    --raised: 37 35 32;
+    --line: 58 55 50;
+    --ink: 242 238 231;
+    --muted: 168 160 149;
+    --faint: 126 119 110;
+
+    --sage: 141 176 156;
+    --sage-deep: 176 205 187;
+    --sage-soft: 40 50 44;
+
+    --clay: 216 138 108;
+    --clay-soft: 58 40 33;
+
+    --dusk: 160 155 200;
+    --dusk-soft: 43 41 55;
+
+    --shadow: 0 0 0;
+  }
+
+  * {
+    @apply border-line;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-paper text-ink font-sans antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-sage ring-offset-2 ring-offset-paper;
+  }
+
+  ::selection {
+    @apply bg-sage-soft text-ink;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-line bg-surface shadow-soft;
+  }
+
+  .stack {
+    @apply mx-auto w-full max-w-2xl px-5;
+  }
+
+  .label {
+    @apply text-xs font-semibold uppercase tracking-[0.12em] text-faint;
+  }
+
+  .prose-quiet p {
+    @apply mb-3 leading-relaxed text-muted last:mb-0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
