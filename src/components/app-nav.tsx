@@ -9,6 +9,13 @@ import { PLAN_LABEL } from "@/lib/billing";
 import type { SubscriptionPlan } from "@/lib/types";
 
 /**
+ * Declared outright rather than derived from TABS. Deriving it means moving a
+ * tab silently invalidates an icon key, which is exactly how this file last
+ * broke the build.
+ */
+type IconName = "sun" | "chat" | "leaf" | "pen" | "chart" | "more";
+
+/**
  * Four destinations plus More on the phone. Five icons is the ceiling before
  * the labels stop being readable at 375px.
  *
@@ -17,12 +24,12 @@ import type { SubscriptionPlan } from "@/lib/types";
  * they lived only in a nav that never renders below `sm`. Anything not in the
  * four below has to be in the More sheet, or it does not exist on mobile.
  */
-const TABS = [
+const TABS: ReadonlyArray<{ href: string; label: string; icon: IconName }> = [
   { href: "/dashboard", label: "Today", icon: "sun" },
   { href: "/chat", label: "Support", icon: "chat" },
   { href: "/journal", label: "Journal", icon: "pen" },
   { href: "/tools", label: "Tools", icon: "leaf" },
-] as const;
+];
 
 const SECONDARY = [
   { href: "/insights", label: "Patterns" },
@@ -51,8 +58,6 @@ const MORE_SECTIONS = [
     ],
   },
 ] as const;
-
-type IconName = (typeof TABS)[number]["icon"] | "more";
 
 const PATHS: Record<IconName, string> = {
   sun: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM12 3v1.5M12 19.5V21M3 12h1.5M19.5 12H21M5.6 5.6l1 1M17.4 17.4l1 1M18.4 5.6l-1 1M6.6 17.4l-1 1",
