@@ -52,7 +52,6 @@ export type MentalProfile = {
   coping_methods: string[];
   goals: string[];
   therapy_experience: string;
-  onboarding_completed: boolean;
 };
 
 export type SymptomFrequency = "occasionally" | "few_times_week" | "most_days" | "every_day";

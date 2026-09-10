@@ -32,7 +32,9 @@ export async function POST(request: Request) {
       coping_methods: data.copingMethods,
       goals: data.goals,
       therapy_experience: data.therapyExperience,
-      onboarding_completed: true,
+      // NOTE: `mental_profiles` has no `onboarding_completed` column in the
+      // live schema — only `user_support_preferences` does. Writing one here
+      // failed the whole upsert and blocked every signup.
       updated_at: now,
     },
     { onConflict: "user_id" },

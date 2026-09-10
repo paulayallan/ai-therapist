@@ -58,7 +58,7 @@ export async function getMentalProfile(): Promise<MentalProfile | null> {
   const { data } = await supabase
     .from("mental_profiles")
     .select(
-      "brings_you_here, current_mood, therapist_style, main_challenges, stress_level, sleep_quality, triggers, coping_methods, goals, therapy_experience, onboarding_completed",
+      "brings_you_here, current_mood, therapist_style, main_challenges, stress_level, sleep_quality, triggers, coping_methods, goals, therapy_experience",
     )
     .maybeSingle();
   return (data as MentalProfile) ?? null;
@@ -74,16 +74,18 @@ export async function getSupportPreferences(): Promise<SupportPreferences | null
 }
 
 /**
- * Onboarding is complete when either source says so. The live app checks
- * `user_support_preferences` first and falls back to the mental profile;
- * that behaviour is preserved so existing users are not sent through
- * onboarding a second time.
+ * Onboarding is complete when `user_support_preferences` says so — that is the
+ * only table in the live schema carrying the flag.
+ *
+ * The fallback matters as much as the flag: accounts created before it existed
+ * have no `onboarding_completed` anywhere, but they do have real profile
+ * content. Without this check those people would be marched back through
+ * onboarding, which for someone who has been using the app for months reads
+ * like it forgot who they are.
  */
 export async function isOnboarded(): Promise<boolean> {
   const [prefs, mental] = await Promise.all([getSupportPreferences(), getMentalProfile()]);
   if (prefs?.onboarding_completed) return true;
-  if (mental?.onboarding_completed) return true;
-  // Older accounts predate both flags but have real profile content.
   return Boolean(mental && (mental.main_challenges.length > 0 || mental.goals.length > 0));
 }
 
