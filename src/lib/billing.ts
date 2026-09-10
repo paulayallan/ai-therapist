@@ -26,21 +26,41 @@ export const revenueCatConfig = {
 
 const PLAN_RANK: Record<SubscriptionPlan, number> = { free: 0, pro: 1, premium: 2 };
 
+/**
+ * Entitlement ids are compared case-insensitively, deliberately.
+ *
+ * The live entitlements are named `Pro`, `Premium` and `platinum` — two
+ * capitalised, one not. An exact-match comparison against a lowercase default
+ * fails silently: the purchase records, the webhook writes `free`, and someone
+ * who paid sits on the free tier with no error anywhere to explain it. That is
+ * the worst possible failure in a billing path, so a difference in casing is
+ * not allowed to cause it.
+ */
+function matchesEntitlement(active: string[], wanted: string): boolean {
+  const target = wanted.trim().toLowerCase();
+  return active.some((id) => id.trim().toLowerCase() === target);
+}
+
 export function resolveSubscriptionFromActiveEntitlements(
   activeEntitlements: string[],
 ): Subscription {
   const legacyPlatinum = process.env.NEXT_PUBLIC_REVENUECAT_PLATINUM_ENTITLEMENT_ID ?? "platinum";
 
   if (
-    activeEntitlements.includes(legacyPlatinum) ||
-    activeEntitlements.includes(revenueCatConfig.plans.premium.entitlementId)
+    matchesEntitlement(activeEntitlements, legacyPlatinum) ||
+    matchesEntitlement(activeEntitlements, revenueCatConfig.plans.premium.entitlementId)
   ) {
     return { plan: "premium", status: "active", currentPeriodEnd: null };
   }
-  if (activeEntitlements.includes(revenueCatConfig.plans.pro.entitlementId)) {
+  if (matchesEntitlement(activeEntitlements, revenueCatConfig.plans.pro.entitlementId)) {
     return { plan: "pro", status: "active", currentPeriodEnd: null };
   }
   return { plan: "free", status: "inactive", currentPeriodEnd: null };
+}
+
+/** Shared with the RevenueCat webhook so both resolve a plan identically. */
+export function planFromActiveEntitlements(activeEntitlements: string[]): SubscriptionPlan {
+  return resolveSubscriptionFromActiveEntitlements(activeEntitlements).plan;
 }
 
 export function isStarterTrialActive(subscription: Subscription | null | undefined): boolean {
