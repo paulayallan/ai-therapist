@@ -1,15 +1,22 @@
-import { NextResponse } from "next/server";
-import { jsonError, requireUser } from "@/lib/api";
+import { jsonError, jsonOk, requireUser } from "@/lib/api";
 import { webCheckoutUrl } from "@/lib/billing";
 
 /**
  * Web checkout.
  *
- * The live app had a conversion bug where paid buttons sent web users back to
- * /upgrade instead of a real checkout, so nobody could pay. The fix is kept
- * here and made explicit: a missing URL returns a clear error rather than a
- * redirect back to the page they came from. A dead loop looks like a broken
- * app; an honest message looks like a configuration gap.
+ * Returns the checkout URL as JSON rather than issuing a redirect.
+ *
+ * The redirect version could never have worked from the browser: the button
+ * calls this with `fetch`, fetch follows the 303 to pay.rev.cat, and that
+ * cross-origin response carries no CORS headers — so the request throws before
+ * any code here gets a say. The person sees "checkout is unavailable" no
+ * matter how correctly the links are configured. Handing back a URL for the
+ * page to navigate to sidesteps CORS entirely, because a navigation is not a
+ * fetch.
+ *
+ * The live app had a related bug where paid buttons bounced people back to
+ * /upgrade with no explanation. That fix is preserved: a missing link is an
+ * explicit, visible failure rather than a silent dead end.
  */
 export async function GET(request: Request) {
   const { user, response } = await requireUser();
@@ -25,11 +32,11 @@ export async function GET(request: Request) {
   const url = webCheckoutUrl(plan, user.id, user.email);
   if (!url) {
     return jsonError(
-      "Web checkout is not configured yet. On iPhone or iPad you can subscribe inside the app.",
+      "Web checkout is not set up yet. On iPhone or iPad you can subscribe inside the app.",
       503,
       { plan },
     );
   }
 
-  return NextResponse.redirect(url, { status: 303 });
+  return jsonOk({ url, plan });
 }

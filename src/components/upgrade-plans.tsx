@@ -90,12 +90,16 @@ export function UpgradePlans({
     setBusy(plan);
     setError(null);
     try {
-      const response = await fetch(`/api/billing/checkout?plan=${plan}`, { redirect: "follow" });
-      if (response.redirected) {
-        window.location.href = response.url;
+      const response = await fetch(`/api/billing/checkout?plan=${plan}`);
+      const payload = await response.json();
+
+      // A full navigation, not a fetch — the checkout is on another origin and
+      // would fail CORS if we tried to follow it here.
+      if (response.ok && typeof payload?.url === "string") {
+        window.location.href = payload.url;
         return;
       }
-      const payload = await response.json();
+
       setError(payload?.error ?? "Checkout is unavailable right now.");
     } catch {
       setError("Checkout is unavailable right now.");
