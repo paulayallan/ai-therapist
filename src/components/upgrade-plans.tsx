@@ -76,14 +76,30 @@ export function UpgradePlans({
   currentPlan: SubscriptionPlan;
   trialDaysLeft: number | null;
 }) {
-  const [isApple, setIsApple] = useState(false);
+  const [inNativeApp, setInNativeApp] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<SubscriptionPlan | null>(null);
 
   useEffect(() => {
-    // Apple requires in-app purchase inside the native app, so the web button
-    // must not pretend to be a checkout there.
-    setIsApple(/iPad|iPhone|iPod/.test(navigator.userAgent));
+    /*
+     * Apple requires digital subscriptions bought INSIDE the native app to go
+     * through in-app purchase (Guideline 3.1.1), so the web checkout button
+     * must not appear there.
+     *
+     * It must still appear in mobile Safari. Someone reading this on their
+     * phone in a browser is on the open web, where Apple's rule does not
+     * reach — and a plain iPhone user-agent test cannot tell the two apart.
+     * Testing the user agent turns away every iPhone visitor on the website
+     * and sends them to an app they may not even have.
+     *
+     * So: detect the native shell itself. Capacitor defines this global only
+     * when running natively; the query flag is a manual override for testing
+     * the native branch from a desktop browser.
+     */
+    const capacitor = (window as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
+    const native = Boolean(capacitor?.isNativePlatform?.());
+    const forced = new URLSearchParams(window.location.search).get("native") === "1";
+    setInNativeApp(native || forced);
   }, []);
 
   async function checkout(plan: "pro" | "premium") {
@@ -162,7 +178,7 @@ export function UpgradePlans({
 
               {plan.id !== "free" && !current ? (
                 <div className="mt-4">
-                  {isApple ? (
+                  {inNativeApp ? (
                     <p className="text-xs leading-relaxed text-muted">
                       On iPhone and iPad, subscribing happens through the App Store inside the
                       Mentara app.
