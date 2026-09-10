@@ -20,7 +20,9 @@ export async function GET(request: Request) {
     return jsonError("Choose either the pro or premium plan.", 422);
   }
 
-  const url = webCheckoutUrl(plan);
+  // The person's own id is what ties the purchase back to their account, so it
+  // is built here from the session rather than trusted from the request.
+  const url = webCheckoutUrl(plan, user.id, user.email);
   if (!url) {
     return jsonError(
       "Web checkout is not configured yet. On iPhone or iPad you can subscribe inside the app.",

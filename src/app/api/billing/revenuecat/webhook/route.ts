@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { revenueCatConfig } from "@/lib/billing";
-import type { SubscriptionPlan } from "@/lib/types";
+import { planFromActiveEntitlements } from "@/lib/billing";
 
 /**
  * RevenueCat webhook receiver.
@@ -51,15 +50,6 @@ const ENDS_ACCESS = new Set(["EXPIRATION", "SUBSCRIPTION_PAUSED"]);
 /** Their card failed but the grace period is still running. Access continues. */
 const AT_RISK = new Set(["BILLING_ISSUE"]);
 
-function planFromEntitlements(ids: string[]): SubscriptionPlan {
-  const legacyPlatinum = process.env.NEXT_PUBLIC_REVENUECAT_PLATINUM_ENTITLEMENT_ID ?? "platinum";
-  if (ids.includes(legacyPlatinum) || ids.includes(revenueCatConfig.plans.premium.entitlementId)) {
-    return "premium";
-  }
-  if (ids.includes(revenueCatConfig.plans.pro.entitlementId)) return "pro";
-  return "free";
-}
-
 export async function POST(request: Request) {
   // 1. Shared secret. RevenueCat sends whatever you put in its Authorization
   //    header field. Without this, anyone who finds the URL can grant
@@ -102,7 +92,7 @@ export async function POST(request: Request) {
 
   const entitlements = event.entitlement_ids ?? (event.entitlement_id ? [event.entitlement_id] : []);
   const ending = ENDS_ACCESS.has(event.type);
-  const plan = ending ? "free" : planFromEntitlements(entitlements);
+  const plan = ending ? "free" : planFromActiveEntitlements(entitlements);
 
   const status = ending
     ? "inactive"

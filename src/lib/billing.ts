@@ -97,12 +97,37 @@ export const PLAN_LABEL: Record<SubscriptionPlan, string> = {
 };
 
 /**
- * Web checkout. The live app had a bug where paid buttons bounced users back
- * to /upgrade instead of a real checkout; the fix is preserved here by
- * treating a missing URL as an explicit, visible failure rather than a
- * redirect loop.
+ * Web checkout, via a RevenueCat Web Purchase Link.
+ *
+ * The link is `https://pay.rev.cat/<token>/<appUserId>` — the person's id is a
+ * PATH segment, not a query parameter, and RevenueCat returns 404 without it.
+ * So `BILLING_PRO_URL` / `BILLING_PREMIUM_URL` hold only the bare token link
+ * and this function completes it.
+ *
+ * The id must be the Supabase user id, the same value the native app passes to
+ * `Purchases.logIn`. Use anything else and someone who subscribes on the web
+ * becomes a second RevenueCat customer, their entitlement lands on an account
+ * that isn't theirs, and the webhook has no way to tell.
+ *
+ * The live app had a bug where paid buttons bounced users back to /upgrade
+ * instead of a checkout. That fix is preserved: a missing link is an explicit,
+ * visible failure rather than a redirect loop.
  */
-export function webCheckoutUrl(plan: "pro" | "premium"): string | null {
-  const url = plan === "pro" ? process.env.BILLING_PRO_URL : process.env.BILLING_PREMIUM_URL;
-  return url && url.startsWith("http") ? url : null;
+export function webCheckoutUrl(
+  plan: "pro" | "premium",
+  userId: string,
+  email?: string | null,
+): string | null {
+  const base = plan === "pro" ? process.env.BILLING_PRO_URL : process.env.BILLING_PREMIUM_URL;
+  if (!base || !base.startsWith("http") || !userId) return null;
+
+  const trimmed = base.replace(/\/+$/, "");
+
+  // Tolerate a link that already carries the id, in case someone pastes a
+  // complete one into the environment variable.
+  const url = trimmed.endsWith(`/${userId}`) ? trimmed : `${trimmed}/${encodeURIComponent(userId)}`;
+
+  // Pre-fills the payment page and keeps the receipt going to the address they
+  // actually signed up with.
+  return email ? `${url}?email=${encodeURIComponent(email)}` : url;
 }
