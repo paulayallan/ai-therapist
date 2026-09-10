@@ -37,7 +37,11 @@ export async function POST(request: Request) {
     },
     { onConflict: "user_id" },
   );
-  if (mentalError) return jsonError("Could not save your profile.", 500);
+  if (mentalError) {
+    // The person sees a plain sentence; this is how you find out what broke.
+    console.error("[mentara/onboarding] mental_profiles upsert failed:", mentalError);
+    return jsonError("Could not save your profile.", 500);
+  }
 
   const { error: prefsError } = await supabase.from("user_support_preferences").upsert(
     {
@@ -52,9 +56,12 @@ export async function POST(request: Request) {
     },
     { onConflict: "user_id" },
   );
-  if (prefsError) return jsonError("Could not save your preferences.", 500);
+  if (prefsError) {
+    console.error("[mentara/onboarding] user_support_preferences upsert failed:", prefsError);
+    return jsonError("Could not save your preferences.", 500);
+  }
 
-  await supabase
+  const { error: profileError } = await supabase
     .from("profiles")
     .update({
       display_name: displayName,
@@ -63,10 +70,11 @@ export async function POST(request: Request) {
       ai_data_consent_version: data.aiConsent ? "1" : null,
     })
     .eq("id", user.id);
+  if (profileError) console.error("[mentara/onboarding] profiles update failed:", profileError);
 
   // Seed what the coach and Twin will read, so the first conversation is not
   // starting from nothing the person already typed.
-  await supabase.from("account_memory").upsert(
+  const { error: memoryError } = await supabase.from("account_memory").upsert(
     {
       user_id: user.id,
       display_name: displayName ?? "",
@@ -81,6 +89,8 @@ export async function POST(request: Request) {
     },
     { onConflict: "user_id" },
   );
+  // Non-fatal: the coach simply starts colder. Never block onboarding on it.
+  if (memoryError) console.error("[mentara/onboarding] account_memory upsert failed:", memoryError);
 
   return jsonOk({ onboarded: true });
 }
