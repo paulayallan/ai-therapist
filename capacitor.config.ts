@@ -42,6 +42,13 @@ const config: CapacitorConfig = {
   },
 
   plugins: {
+    Keyboard: {
+      // `native` lets iOS resize the web view itself when the keyboard opens.
+      // The default leaves the page the same height and scrolls it, which is
+      // what made the chat composer drift around the screen.
+      resize: "native",
+      resizeOnFullScreen: true,
+    },
     SplashScreen: {
       launchAutoHide: true,
       launchShowDuration: 600,

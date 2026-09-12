@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppNav } from "@/components/app-nav";
+import { NativeShell } from "@/components/native-shell";
 import { getEffectiveSubscriptionPlan, starterTrialDaysLeft } from "@/lib/billing";
 import { getSubscription, isOnboarded } from "@/lib/data";
 import { getSessionUser } from "@/lib/supabase/server";
@@ -13,6 +14,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-dvh">
+      <NativeShell />
       <AppNav
         plan={getEffectiveSubscriptionPlan(subscription)}
         trialDaysLeft={starterTrialDaysLeft(subscription)}

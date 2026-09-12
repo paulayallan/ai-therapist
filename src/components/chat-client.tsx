@@ -182,7 +182,7 @@ export function ChatClient({
         <div ref={endRef} />
       </div>
 
-      <div className="sticky bottom-0 -mx-5 mt-6 border-t border-line bg-paper/95 px-5 pb-4 pt-3 backdrop-blur-md">
+      <div className="composer sticky bottom-0 -mx-5 mt-6 border-t border-line bg-paper/95 px-5 pb-4 pt-3 backdrop-blur-md">
         {error ? <p className="mb-2 text-sm text-clay">{error}</p> : null}
         {limited ? (
           <Notice tone="alert">

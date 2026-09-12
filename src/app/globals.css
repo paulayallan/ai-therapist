@@ -60,11 +60,38 @@
 
   html {
     -webkit-tap-highlight-color: transparent;
+    /* Stops iOS inflating text when the phone is turned sideways. */
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
     @apply bg-paper text-ink font-sans antialiased;
     text-rendering: optimizeLegibility;
+  }
+
+  /*
+   * iOS zooms the whole page whenever a focused field is smaller than 16px.
+   * Every input in this app is 15.2px, so tapping the chat composer zoomed
+   * the screen and left it zoomed — the single worst thing about using this
+   * on a phone. 16px on touch devices fixes it at the source; forcing
+   * `user-scalable=no` would also work and would take pinch-zoom away from
+   * anyone who needs it, which is not a trade worth making here.
+   */
+  @supports (-webkit-touch-callout: none) {
+    input,
+    textarea,
+    select {
+      font-size: 16px;
+    }
+  }
+
+  /* No 300ms double-tap-to-zoom delay on anything tappable. */
+  button,
+  a,
+  [role="button"],
+  summary,
+  label {
+    touch-action: manipulation;
   }
 
   :focus-visible {
@@ -102,4 +129,73 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
+}
+/* ---------------------------------------------------------------- native app
+ * Applied only inside the Capacitor shell (NativeShell sets data-native).
+ * Mobile Safari and desktop keep ordinary web behaviour.
+ */
+
+[data-native="true"] body {
+  /* No rubber-band bounce past the top and bottom. */
+  overscroll-behavior-y: none;
+}
+
+[data-native="true"] nav,
+[data-native="true"] header,
+[data-native="true"] button {
+  /* No magnifier or copy bubble on a long press of the furniture. Text stays
+   * selectable — someone may well want to copy something they wrote. */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/*
+ * With the keyboard up, the bottom tab bar has nowhere to go: it either sits
+ * on top of the keys or shoves the composer off-screen. Native apps hide it
+ * while typing and bring it back afterwards, so this does the same.
+ */
+[data-native="true"][data-keyboard="open"] nav[aria-label="Sections"] {
+  transform: translateY(100%);
+  pointer-events: none;
+}
+
+[data-native="true"] nav[aria-label="Sections"] {
+  transition: transform 0.18s ease-out;
+}
+
+/* The composer keeps clear of the home indicator, and drops that padding
+ * while the keyboard is up because the keyboard already covers it. */
+[data-native="true"] .composer {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+[data-native="true"][data-keyboard="open"] .composer {
+  padding-bottom: 0.75rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-native="true"] nav[aria-label="Sections"] {
+    transition: none;
+  }
+}
+
+
+/*
+ * The chat composer is sticky and the tab bar is fixed, so on a phone they
+ * both claim the bottom of the screen and the tab bar wins — covering the
+ * text field you are trying to type into. Lift the composer clear of it.
+ *
+ * 3.5rem is the tab bar's own height; the inset is the home indicator.
+ */
+@media (max-width: 639px) {
+  .composer {
+    bottom: calc(3.5rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* Keyboard up means the tab bar has slid away, so the composer takes the
+ * whole bottom again and sits directly on the keys. */
+[data-keyboard="open"] .composer {
+  bottom: 0;
 }
