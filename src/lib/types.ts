@@ -275,4 +275,10 @@ export type HomeworkItem = {
 
 /* ------------------------------------------------------------- crisis */
 
-export type CrisisRegion = "AU" | "US" | "UK" | "NZ" | "CA" | "IE" | "INTL";
+export type CrisisRegion =
+  | "AU" | "NZ" | "US" | "CA" | "UK" | "IE"
+  | "ES" | "MX" | "AR" | "CO" | "CL"
+  | "BR" | "PT"
+  | "TW" | "HK" | "SG"
+  | "AE" | "SA" | "EG"
+  | "INTL";
