@@ -43,6 +43,9 @@ export type Therapist = {
   accepting_clients: boolean;
   subscription_status: TherapistSubscriptionStatus;
   subscription_period_end: string | null;
+  /** Stripe, not RevenueCat. Practitioners never go through Apple. */
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
   created_at: string;
 };
 

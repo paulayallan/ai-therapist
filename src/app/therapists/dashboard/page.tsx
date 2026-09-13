@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { Card, Empty, Notice, SectionHeading } from "@/components/ui/card";
+import { TherapistBillingButton } from "@/components/therapist-billing-button";
 import { createSupabaseServerClient, getSessionUser } from "@/lib/supabase/server";
 import {
   MONTHLY_FEE_AUD,
@@ -125,6 +126,14 @@ export default async function TherapistDashboardPage() {
             <p className="text-[0.95rem] leading-relaxed text-muted">
               {therapist.registration_conditions}
             </p>
+          </div>
+        ) : null}
+
+        {/* Billing only appears once verification has passed. Nobody pays their
+            way onto the list before a person has checked the register. */}
+        {therapist.status === "verified" ? (
+          <div className="mt-5 border-t border-line pt-5">
+            <TherapistBillingButton live={live} />
           </div>
         ) : null}
       </Card>
