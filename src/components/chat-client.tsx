@@ -116,9 +116,16 @@ export function ChatClient({
             <h1 className="font-serif text-2xl leading-snug text-ink">
               What&rsquo;s going on right now?
             </h1>
+            {/*
+             * The "not therapy, not monitored by a person" disclaimer lives here
+             * — said once, as an opening line — rather than pinned under the
+             * composer for the whole session. Same information, but it reads as
+             * honesty about what this is instead of a warning label someone has
+             * to sit under while they are upset.
+             */}
             <p className="mt-2 text-[0.95rem] leading-relaxed text-muted">
-              However you want to put it. There&rsquo;s no right way to start, and nothing here is
-              read by another person.
+              However you want to put it. There&rsquo;s no right way to start. This isn&rsquo;t
+              therapy, and nothing here is read by another person.
             </p>
             <div className="mt-6 space-y-2">
               {OPENERS.map((opener) => (
@@ -234,10 +241,16 @@ export function ChatClient({
           </Button>
         </form>
 
-        <p className="mt-2 text-[0.7rem] leading-relaxed text-faint">
-          Not therapy, and not monitored by a person.
-          {typeof left === "number" ? ` ${left} messages left today.` : ""}
-        </p>
+        {/*
+         * The count appears only when it is nearly gone. Someone mid-thought
+         * does not need a meter under the box, but running into the wall with
+         * no warning at all is worse — so it stays quiet until it matters.
+         */}
+        {typeof left === "number" && left > 0 && left <= 3 ? (
+          <p className="mt-2 text-[0.7rem] leading-relaxed text-faint">
+            {left} {left === 1 ? "message" : "messages"} left today.
+          </p>
+        ) : null}
       </div>
     </div>
   );

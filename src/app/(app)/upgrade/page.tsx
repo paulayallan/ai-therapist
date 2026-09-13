@@ -16,7 +16,7 @@ export default async function UpgradePage() {
         <p className="mt-2 max-w-prose leading-relaxed text-muted">
           The free layer is not a demo. SOS, the core tools, journalling and daily check-ins stay
           free for as long as you use Mentara. Paying buys depth — pattern analysis over months
-          rather than days, and a Twin that knows what you have already told it.
+          rather than days, and a memory that holds what you have already told it.
         </p>
       </header>
 

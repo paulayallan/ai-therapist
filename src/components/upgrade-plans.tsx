@@ -54,9 +54,8 @@ const PLANS: {
   {
     id: "premium",
     name: "Premium",
-    pitch: "For the long view — and a Twin that remembers what you have already worked through.",
+    pitch: "For the long view — a memory that holds what you have already worked through.",
     outcomes: [
-      "Your Twin, built from your own patterns",
       "Deeper memory across months",
       "Decision and reaction simulations",
       "Long-range pattern modelling",
@@ -65,7 +64,6 @@ const PLANS: {
     limits: [
       "800 support messages a month",
       "300 journal reflections a month",
-      "80 Twin questions a month",
       "180 minutes of voice a month",
     ],
   },

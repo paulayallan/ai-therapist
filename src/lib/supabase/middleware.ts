@@ -13,7 +13,6 @@ const PROTECTED_PREFIXES = [
   "/insights",
   "/settings",
   "/upgrade",
-  "/twin",
   "/homework",
   "/science-check",
   "/onboarding",

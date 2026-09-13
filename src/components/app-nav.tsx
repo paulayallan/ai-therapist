@@ -19,7 +19,7 @@ type IconName = "sun" | "chat" | "leaf" | "pen" | "chart" | "more";
  * Four destinations plus More on the phone. Five icons is the ceiling before
  * the labels stop being readable at 375px.
  *
- * The desktop bar can show everything, which is how Twin, Homework and Science
+ * The desktop bar can show everything, which is how Homework and Science
  * check were reachable on a laptop and completely unreachable on a phone —
  * they lived only in a nav that never renders below `sm`. Anything not in the
  * four below has to be in the More sheet, or it does not exist on mobile.
@@ -33,7 +33,6 @@ const TABS: ReadonlyArray<{ href: string; label: string; icon: IconName }> = [
 
 const SECONDARY = [
   { href: "/insights", label: "Patterns" },
-  { href: "/twin", label: "Twin" },
   { href: "/homework", label: "Homework" },
   { href: "/science-check", label: "Science" },
 ] as const;
@@ -45,7 +44,6 @@ const MORE_SECTIONS = [
     label: "Explore",
     items: [
       { href: "/insights", label: "Patterns" },
-      { href: "/twin", label: "Your Twin" },
       { href: "/homework", label: "Homework" },
       { href: "/science-check", label: "Science check" },
     ],

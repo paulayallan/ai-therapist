@@ -157,19 +157,6 @@ export default async function DashboardPage() {
         </Link>
       </Card>
 
-      {plan === "premium" ? (
-        <Card>
-          <SectionHeading
-            eyebrow="Your Twin"
-            title="Ask something of the version that's read it all"
-            hint="Built from your own entries, so it already knows the pattern."
-          />
-          <Link href="/twin" className="text-sm text-sage-deep underline underline-offset-4">
-            Open your Twin
-          </Link>
-        </Card>
-      ) : null}
-
       <Card>
         <SectionHeading
           eyebrow="Science check"
