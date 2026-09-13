@@ -1,0 +1,58 @@
+import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+import { AdminTherapistQueue } from "@/components/admin-therapist-queue";
+import { requireAdmin } from "@/lib/admin";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import type { Therapist } from "@/lib/therapists";
+
+export const metadata: Metadata = { title: "Verification", robots: { index: false, follow: false } };
+export const dynamic = "force-dynamic";
+
+/**
+ * Not a 403. Someone who is not an admin is told this page does not exist,
+ * because confirming that an admin screen lives at this URL is free
+ * reconnaissance and costs us nothing to withhold.
+ */
+export default async function AdminTherapistsPage() {
+  const admin = await requireAdmin();
+  if (!admin) notFound();
+
+  const supabase = createSupabaseAdminClient();
+  const { data } = await supabase
+    .from("therapists")
+    .select("*")
+    // Pending first — they are the ones waiting on a human.
+    .order("status", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  const therapists = (data ?? []) as Therapist[];
+  const pending = therapists.filter((entry) => entry.status === "pending");
+  const rest = therapists.filter((entry) => entry.status !== "pending");
+
+  return (
+    <main id="main" className="mx-auto max-w-2xl space-y-8 px-5 py-12 sm:py-16">
+      <header>
+        <p className="label mb-2">Admin</p>
+        <h1 className="font-serif text-3xl leading-tight text-ink">Practitioner verification</h1>
+        <p className="mt-3 max-w-prose leading-relaxed text-muted">
+          Open the register in another tab and check the number, the name and whether anything is
+          recorded against it. Nobody receives a referral until you have.
+        </p>
+      </header>
+
+      <section>
+        <h2 className="mb-3 font-serif text-xl text-ink">
+          Waiting{pending.length ? ` · ${pending.length}` : ""}
+        </h2>
+        <AdminTherapistQueue therapists={pending} />
+      </section>
+
+      {rest.length ? (
+        <section>
+          <h2 className="mb-3 font-serif text-xl text-ink">Everyone else</h2>
+          <AdminTherapistQueue therapists={rest} />
+        </section>
+      ) : null}
+    </main>
+  );
+}
