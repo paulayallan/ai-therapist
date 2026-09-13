@@ -32,6 +32,20 @@ export default async function SosPage() {
 
       <main id="main" className="px-5 pb-24 pt-6">
         <SosFlow signedIn={Boolean(user)} />
+
+        {/*
+          * Below the flow, never inside it. Someone mid-panic needs the next
+          * thirty seconds, not a referral form. But the person scrolling past
+          * afterwards, on the fourth time this week, is exactly who should
+          * know this exists.
+          */}
+        <p className="mx-auto mt-12 max-w-prose border-t border-line pt-6 text-sm leading-relaxed text-muted">
+          If this keeps happening, it may be worth talking to a person.{" "}
+          <Link href="/find-help" className="text-sage-deep underline underline-offset-4">
+            Mentara can put you in front of a verified practitioner
+          </Link>{" "}
+          — free, and you choose who, or nobody.
+        </p>
       </main>
     </div>
   );

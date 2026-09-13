@@ -157,6 +157,22 @@ export default async function DashboardPage() {
         </Link>
       </Card>
 
+      {/*
+        * Deliberately a card and not a tab. A permanent tab saying "find a real
+        * therapist" tells someone every single day that this app is not enough
+        * for them. A card sits there quietly until the day they go looking.
+        */}
+      <Card>
+        <SectionHeading
+          eyebrow="When an app isn't the right help"
+          title="Talk to an actual person"
+          hint="Verified practitioners see what you ask for and offer to take you on. You choose who, or nobody."
+        />
+        <Link href="/find-help" className="text-sm text-sage-deep underline underline-offset-4">
+          Find a person
+        </Link>
+      </Card>
+
       <Card>
         <SectionHeading
           eyebrow="Science check"

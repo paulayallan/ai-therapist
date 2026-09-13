@@ -46,6 +46,7 @@ const MORE_SECTIONS = [
       { href: "/insights", label: "Patterns" },
       { href: "/homework", label: "Homework" },
       { href: "/science-check", label: "Science check" },
+      { href: "/find-help", label: "Find a person" },
     ],
   },
   {
@@ -108,6 +109,11 @@ export function AppNav({ plan, trialDaysLeft }: { plan: SubscriptionPlan; trialD
 
   return (
     <>
+      {/*
+        * `viewport-fit=cover` lets the web view run under the status bar, which
+        * is what puts "Mentara" on top of the clock and the Dynamic Island.
+        * The inset is zero in a browser, so this only pads where it must.
+        */}
       <header className="sticky top-0 z-30 border-b border-line bg-paper/85 pt-[env(safe-area-inset-top)] backdrop-blur-md">
         <div className="mx-auto flex h-16 w-full max-w-5xl items-center gap-2 px-5">
           <Link href="/dashboard" className="mr-2 font-serif text-lg tracking-tight text-ink">

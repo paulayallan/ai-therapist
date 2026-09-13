@@ -15,8 +15,9 @@ const PROTECTED_PREFIXES = [
   "/upgrade",
   "/homework",
   "/science-check",
+  "/find-help",
   "/onboarding",
-  // /therapists itself stays public -- practitioners have to be able to read
+  // /therapists itself stays public — practitioners have to be able to read
   // what they are signing up to before they sign in.
   "/therapists/apply",
   "/therapists/dashboard",

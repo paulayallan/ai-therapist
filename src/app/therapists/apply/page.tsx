@@ -31,8 +31,8 @@ export default async function TherapistApplyPage() {
       </Link>
       <h1 className="mt-4 font-serif text-3xl leading-tight text-ink">Apply to be listed</h1>
       <p className="mt-3 max-w-prose leading-relaxed text-muted">
-        Ten minutes, and then a person checks your registration against the public register. We will
-        email you either way.
+        Ten minutes, and then a person checks your registration against the public register. Usually
+        a day or two. Your dashboard shows where it has got to, either way.
       </p>
 
       <div className="mt-10">

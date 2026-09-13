@@ -3,7 +3,15 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { Card, Empty, Notice, SectionHeading } from "@/components/ui/card";
 import { TherapistBillingButton } from "@/components/therapist-billing-button";
+import { TherapistRequests } from "@/components/therapist-requests";
 import { createSupabaseServerClient, getSessionUser } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { matches } from "@/lib/referral-matching";
+import type {
+  MatchedForPractitioner,
+  ReferralRequest,
+  RequestForPractitioner,
+} from "@/lib/referrals";
 import {
   MONTHLY_FEE_AUD,
   STATUS_LABEL,
@@ -59,6 +67,73 @@ export default async function TherapistDashboardPage() {
 
   const live = canReceiveReferrals(therapist);
   const blocked = blockedReason(therapist);
+
+  /*
+   * Requests belong to the person who wrote them, and row-level security says
+   * so — which is why this reads them with the service role and then filters
+   * in code. Two things are load-bearing here: `matches()` decides what this
+   * practitioner is allowed to see, and the objects handed to the component
+   * are built field by field. Spreading the row would hand over contact
+   * details to someone who has not been chosen yet.
+   */
+  let openRequests: RequestForPractitioner[] = [];
+  let matchedRequests: MatchedForPractitioner[] = [];
+
+  if (live) {
+    const admin = createSupabaseAdminClient();
+
+    const [{ data: openRows }, { data: myOffers }] = await Promise.all([
+      admin
+        .from("referral_requests")
+        .select("*")
+        .eq("status", "open")
+        .gt("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: true })
+        .limit(100),
+      admin.from("referral_offers").select("request_id, status").eq("therapist_id", therapist.id),
+    ]);
+
+    const alreadyOffered = new Set((myOffers ?? []).map((offer) => offer.request_id as string));
+
+    openRequests = ((openRows ?? []) as ReferralRequest[])
+      .filter((row) => !alreadyOffered.has(row.id))
+      .filter((row) => matches(therapist, row).matches)
+      .map((row) => ({
+        id: row.id,
+        concern_areas: row.concern_areas,
+        note: row.note,
+        preferred_language: row.preferred_language,
+        delivery_preference: row.delivery_preference,
+        state: row.state,
+        funding: row.funding,
+        created_at: row.created_at,
+      }));
+
+    const acceptedIds = (myOffers ?? [])
+      .filter((offer) => offer.status === "accepted")
+      .map((offer) => offer.request_id as string);
+
+    if (acceptedIds.length > 0) {
+      const { data: matchedRows } = await admin
+        .from("referral_requests")
+        .select("*")
+        .in("id", acceptedIds)
+        .eq("status", "matched");
+
+      matchedRequests = ((matchedRows ?? []) as ReferralRequest[]).map((row) => ({
+        id: row.id,
+        concern_areas: row.concern_areas,
+        note: row.note,
+        preferred_language: row.preferred_language,
+        delivery_preference: row.delivery_preference,
+        state: row.state,
+        funding: row.funding,
+        created_at: row.created_at,
+        contact_name: row.contact_name,
+        contact_email: row.contact_email,
+      }));
+    }
+  }
 
   return (
     <main id="main" className="mx-auto max-w-2xl space-y-6 px-5 py-12 sm:py-16">
@@ -138,24 +213,21 @@ export default async function TherapistDashboardPage() {
         ) : null}
       </Card>
 
-      <Card>
-        <SectionHeading
-          eyebrow="Referrals"
-          title="Requests that match you"
-          hint="People who have asked for a person rather than an app."
-        />
-        {live ? (
-          <Empty
-            title="Nothing waiting"
-            body="Matching requests will appear here. You will get an email when one does."
+      {live ? (
+        <TherapistRequests open={openRequests} matched={matchedRequests} />
+      ) : (
+        <Card>
+          <SectionHeading
+            eyebrow="Referrals"
+            title="Requests that match you"
+            hint="People who have asked for a person rather than an app."
           />
-        ) : (
           <Empty
             title="Not yet"
             body="Requests appear once your registration is verified and your listing is active."
           />
-        )}
-      </Card>
+        </Card>
+      )}
 
       <p className="max-w-prose text-sm leading-relaxed text-muted">
         Mentara introduces clients and steps back. Care of anyone who chooses you is yours, on your
