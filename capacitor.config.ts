@@ -1,4 +1,8 @@
 import type { CapacitorConfig } from "@capacitor/cli";
+// A value import, not a type one: `resize` is typed as the KeyboardResize enum,
+// and TypeScript will not accept the bare string "native" in its place. This is
+// the form Capacitor's own docs use.
+import { KeyboardResize } from "@capacitor/keyboard";
 
 /**
  * The native shell.
@@ -46,7 +50,7 @@ const config: CapacitorConfig = {
       // `native` lets iOS resize the web view itself when the keyboard opens.
       // The default leaves the page the same height and scrolls it, which is
       // what made the chat composer drift around the screen.
-      resize: "native",
+      resize: KeyboardResize.Native,
       resizeOnFullScreen: true,
     },
     SplashScreen: {
