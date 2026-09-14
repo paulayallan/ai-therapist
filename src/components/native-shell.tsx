@@ -37,7 +37,7 @@ export function NativeShell() {
         // composer pinned to the top of the keyboard instead of being pushed
         // around by a scroll the page did not ask for.
         await Keyboard.setResizeMode({ mode: KeyboardResize.Native }).catch(() => {});
-        await Keyboard.setScroll({ isDisabled: true }).catch(() => {});
+        await Keyboard.setScroll({ isDisabled: false }).catch(() => {});
 
         const show = await Keyboard.addListener("keyboardWillShow", (info) => {
           root.dataset.keyboard = "open";
