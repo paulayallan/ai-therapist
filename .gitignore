@@ -45,3 +45,5 @@ pnpm-debug.log*
 *[[:space:]][0-9].tsx
 *[[:space:]][0-9].json
 *[[:space:]][0-9].xml
+.vercel
+.env*
