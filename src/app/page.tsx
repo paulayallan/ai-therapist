@@ -67,6 +67,30 @@ export default async function LandingPage() {
           <p className="mt-6 text-sm text-faint">
             Free to use. No card. Your writing stays yours.
           </p>
+
+          {/*
+            * Visible, but below the fold of the decision. Someone here for
+            * themselves has already read the two buttons above and will not
+            * be pulled sideways by this; a psychologist scanning for the
+            * professional entrance finds it without being told the URL.
+            *
+            * data-web-only: hidden inside the iOS app, because it leads to a
+            * $30/month Stripe subscription and Apple Guideline 3.1.1 does not
+            * allow an app to point at one. On the web it is untouched.
+            */}
+          <p
+            data-web-only
+            className="mt-10 border-t border-line pt-6 text-[0.95rem] text-muted"
+          >
+            <span className="text-ink">Practitioner?</span>{" "}
+            <Link
+              href="/therapists"
+              className="text-sage-deep underline underline-offset-4 hover:text-ink"
+            >
+              Register or sign in here
+            </Link>{" "}
+            <span className="text-faint">— take referrals from Mentara.</span>
+          </p>
         </section>
 
         <section className="border-y border-line bg-surface py-16">
@@ -108,6 +132,19 @@ export default async function LandingPage() {
             </Link>
             <Link href="/sos" className="hover:text-ink">
               Crisis support
+            </Link>
+            {/*
+              * The other door to the practitioner side. In the footer rather
+              * than the hero on purpose: this page has to speak to one person,
+              * and a psychologist looking for the professional entrance looks
+              * where professional links live.
+              *
+              * data-web-only for the same reason as the line above — Apple
+              * Guideline 3.1.1. Privacy, Terms and Crisis support stay, in the
+              * app and everywhere else.
+              */}
+            <Link href="/therapists" data-web-only className="hover:text-ink">
+              For practitioners
             </Link>
           </nav>
           <p className="mt-6 text-xs text-faint">© {new Date().getFullYear()} Mentara</p>

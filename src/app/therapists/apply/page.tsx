@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Apply to be listed" };
 
 export default async function TherapistApplyPage() {
   const user = await getSessionUser();
-  if (!user) redirect("/auth?next=/therapists/apply");
+  if (!user) redirect("/auth?as=practitioner&next=/therapists/apply");
 
   // One application per account. Anyone who already has one belongs on the
   // dashboard, where the state of it lives.

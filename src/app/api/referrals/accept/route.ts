@@ -2,11 +2,21 @@ import { z } from "zod";
 import { jsonError, jsonOk, readBody, requireUser } from "@/lib/api";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-const acceptSchema = z.object({
-  offerId: z.string().uuid(),
-  /** "accept" releases contact details. "withdraw" ends the whole request. */
-  action: z.enum(["accept", "withdraw"]),
-});
+/**
+ * Accepting is about an offer. Withdrawing is about the request.
+ *
+ * They used to share one shape that always required an `offerId`, and
+ * withdrawing looked the request up *through* that offer. Which meant that
+ * with no offers yet — the state every request starts in, and the state every
+ * request is in while no practitioner is listed — there was no way to
+ * withdraw at all. The button found `offers[0]`, got nothing, and did nothing
+ * silently. Someone who asked for help and changed their mind was stuck with
+ * an open request and no way to take it back.
+ */
+const acceptSchema = z.discriminatedUnion("action", [
+  z.object({ action: z.literal("accept"), offerId: z.string().uuid() }),
+  z.object({ action: z.literal("withdraw"), requestId: z.string().uuid() }),
+]);
 
 /**
  * Choosing a practitioner, or choosing nobody.
@@ -29,6 +39,38 @@ export async function POST(request: Request) {
 
   const supabase = await createSupabaseServerClient();
 
+  if (data.action === "withdraw") {
+    const { data: own } = await supabase
+      .from("referral_requests")
+      .select("id, status, user_id")
+      .eq("id", data.requestId)
+      .maybeSingle();
+
+    if (!own || own.user_id !== user.id) return jsonError("Not found.", 404);
+
+    // A held request is one the crisis screen stopped. Someone must be able to
+    // take that back too — arguably more than anyone.
+    if (own.status !== "open" && own.status !== "held") {
+      return jsonError("That request is already closed.", 409);
+    }
+
+    // Offers may or may not exist. Declining none is not an error.
+    await supabase
+      .from("referral_offers")
+      .update({ status: "declined" })
+      .eq("request_id", own.id)
+      .eq("status", "offered");
+
+    const { error: withdrawError } = await supabase
+      .from("referral_requests")
+      .update({ status: "withdrawn" })
+      .eq("id", own.id);
+
+    if (withdrawError) return jsonError("That did not save.", 500);
+
+    return jsonOk({ withdrawn: true });
+  }
+
   const { data: offer } = await supabase
     .from("referral_offers")
     .select("id, request_id, status")
@@ -46,19 +88,6 @@ export async function POST(request: Request) {
   if (!referral || referral.user_id !== user.id) return jsonError("Not found.", 404);
   if (referral.status !== "open") {
     return jsonError("That request has already been answered.", 409);
-  }
-
-  if (data.action === "withdraw") {
-    await supabase
-      .from("referral_offers")
-      .update({ status: "declined" })
-      .eq("request_id", referral.id)
-      .eq("status", "offered");
-    await supabase
-      .from("referral_requests")
-      .update({ status: "withdrawn" })
-      .eq("id", referral.id);
-    return jsonOk({ withdrawn: true });
   }
 
   if (offer.status !== "offered") return jsonError("That offer is no longer open.", 409);

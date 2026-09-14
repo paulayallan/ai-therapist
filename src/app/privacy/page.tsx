@@ -33,7 +33,20 @@ const SECTIONS = [
     heading: "Who can see it",
     body: [
       "You. Every table enforces row-level security in the database, which means a query can only ever return rows belonging to the account that made it.",
-      "Nothing you write is shared with other users, sold, or used to train any model.",
+      "Nothing you write is sold, or used to train any model. Your journal, your check-ins and anything you say in Support chat are never shown to another person using Mentara.",
+      "There is one exception, and it only happens if you start it: asking to be matched with a practitioner. That is described below.",
+    ],
+  },
+  {
+    heading: "If you ask to be matched with a practitioner",
+    body: [
+      "Nothing in this section happens unless you fill in the Find help form yourself. If you never do, no practitioner ever sees anything about you.",
+      "What practitioners can see: the areas you chose, the note you wrote, the language you asked for, whether you want video or a room, your state, and how you expect to pay. Only practitioners whose registration has been verified, who are currently listed, and who match what you asked for.",
+      "What they cannot see: your name or your email, until you have read their offers and chosen one of them. At that moment those two things go to that practitioner and to nobody else.",
+      "What is never included: your journal, your check-ins, your Support chat, your SOS logs, your patterns. A practitioner sees the form you filled in and nothing else from the app.",
+      "If the note you write trips the crisis screen, the request is held and no practitioner sees it at all. You are shown crisis lines instead.",
+      "Once you have chosen someone, what happens next is between you and them, on their systems. Mentara is an introduction service, not a provider of care, and does not see or hold anything about the sessions themselves.",
+      "You can withdraw a request at any time before you choose someone, and nothing further is sent.",
     ],
   },
   {

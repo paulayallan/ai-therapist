@@ -37,6 +37,27 @@ export function NativeShell() {
         // composer pinned to the top of the keyboard instead of being pushed
         // around by a scroll the page did not ask for.
         await Keyboard.setResizeMode({ mode: KeyboardResize.Native }).catch(() => {});
+
+        /*
+         * THIS IS THE ONE THAT BROKE SCROLLING. Do not set it to true.
+         *
+         * `setScroll({ isDisabled: true })` does not mean "don't scroll the
+         * page when the keyboard opens", which is what it was added for. On
+         * iOS it sets `webView.scrollView.isScrollEnabled = false` — it turns
+         * off scrolling for the entire WebView, and the WebView is the whole
+         * app. Every screen froze.
+         *
+         * It was never needed: `resize: native` already stops the keyboard
+         * shoving the page around, by resizing the view instead of scrolling
+         * it. The two were solving the same problem and this one took the app
+         * down with it.
+         *
+         * Set explicitly to false rather than simply deleted. `isScrollEnabled`
+         * is a property of the native scroll view, and the WebView survives a
+         * page reload — so for anyone whose app is open right now with it
+         * already turned off, just removing the call would leave them stuck
+         * until they force-quit. This actively puts it back.
+         */
         await Keyboard.setScroll({ isDisabled: false }).catch(() => {});
 
         const show = await Keyboard.addListener("keyboardWillShow", (info) => {
@@ -57,8 +78,13 @@ export function NativeShell() {
 
     return () => {
       cleanups.forEach((fn) => fn());
-      delete root.dataset.native;
       delete root.dataset.keyboard;
+      // `data-native` is deliberately NOT removed here. The root layout sets
+      // it before first paint, and it is what hides the practitioner
+      // entrances (Apple Guideline 3.1.1). This component only lives inside
+      // the (app) group, so clearing it on unmount would put those links back
+      // the moment someone navigated to the landing page inside the app —
+      // which is the first screen a reviewer opens.
     };
   }, []);
 

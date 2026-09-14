@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/card";
+import { isNativeApp } from "@/lib/native-purchases";
 import { MONTHLY_FEE_AUD } from "@/lib/therapists";
 
 /**
@@ -13,6 +14,11 @@ import { MONTHLY_FEE_AUD } from "@/lib/therapists";
  * listing, and letting the client choose is how someone ends up with two
  * subscriptions. Navigation is a plain assignment rather than a fetch-redirect,
  * because Stripe is a different origin and a followed redirect would be blocked.
+ *
+ * This is the actual purchasing mechanism Apple's Guideline 3.1.1 is about, so
+ * it is closed twice inside the app: `data-web-only` takes it off the screen
+ * before first paint, and the runtime check below refuses to open Stripe even
+ * if something ever puts it back. Two locks, because one of them is CSS.
  */
 export function TherapistBillingButton({ live }: { live: boolean }) {
   const [busy, setBusy] = useState(false);
@@ -20,6 +26,7 @@ export function TherapistBillingButton({ live }: { live: boolean }) {
 
   async function go() {
     if (busy) return;
+    if (isNativeApp()) return;
     setError(null);
     setBusy(true);
     try {
@@ -36,7 +43,7 @@ export function TherapistBillingButton({ live }: { live: boolean }) {
   }
 
   return (
-    <div className="space-y-3">
+    <div data-web-only className="space-y-3">
       <Button onClick={() => void go()} disabled={busy} variant={live ? "secondary" : "primary"}>
         {busy ? "Opening…" : live ? "Manage billing" : `Start your listing — $${MONTHLY_FEE_AUD}/month`}
       </Button>

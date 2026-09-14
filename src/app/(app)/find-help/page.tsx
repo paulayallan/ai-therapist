@@ -6,7 +6,8 @@ import { CrisisCard } from "@/components/crisis-card";
 import { FindHelpForm } from "@/components/find-help-form";
 import { ReferralOffers, type OfferView } from "@/components/referral-offers";
 import { createSupabaseServerClient, getSessionUser } from "@/lib/supabase/server";
-import { STATUS_COPY, type ReferralRequest } from "@/lib/referrals";
+import { FindHelpElsewhere } from "@/components/find-help-elsewhere";
+import { REFERRALS_OPEN, STATUS_COPY, type ReferralRequest } from "@/lib/referrals";
 import { registrationLabel, type Therapist } from "@/lib/therapists";
 
 export const metadata: Metadata = { title: "Find help" };
@@ -45,7 +46,22 @@ export default async function FindHelpPage() {
   const live = current && ["open", "matched", "held"].includes(current.status);
 
   if (current && live) {
-    const copy = STATUS_COPY[current.status];
+    /*
+     * While matching is off there is nobody to send anything to, so the
+     * standard "your request is with practitioners" screen would be a lie
+     * told to the one person who asked for help. Say what is true and give
+     * them the routes that work today instead.
+     */
+    const copy =
+      !REFERRALS_OPEN && (current.status === "open" || current.status === "held")
+        ? {
+            title: "We are not matching people yet",
+            body:
+              "Your request is here and nothing was sent to anyone — there is nobody listed to send it to. "
+              + "Rather than leave you waiting on something that is not coming, below is what works today. "
+              + "You can withdraw this whenever you want.",
+          }
+        : STATUS_COPY[current.status];
 
     /*
      * Offers, with the practitioner attached. Row-level security lets someone
@@ -115,7 +131,11 @@ export default async function FindHelpPage() {
 
         {current.status === "held" ? <CrisisCard /> : null}
 
-        <ReferralOffers offers={offers} accepted={accepted} />
+        <ReferralOffers requestId={current.id} offers={offers} accepted={accepted} />
+
+        {!REFERRALS_OPEN && (current.status === "open" || current.status === "held") ? (
+          <FindHelpElsewhere country={current.country ?? "AU"} reason="paused" />
+        ) : null}
 
         <Card>
           <SectionHeading eyebrow="What you sent" title="Your request" />
@@ -158,12 +178,14 @@ export default async function FindHelpPage() {
           Talk to an actual person
         </h1>
         <p className="mt-3 max-w-prose leading-relaxed text-muted">
-          There is a point where an app is the wrong help, and asking for a human is the sensible
-          thing rather than the last resort. Tell us what you want help with and practitioners who
-          fit will offer to take you on. You choose who, or nobody.
+          {REFERRALS_OPEN
+            ? "There is a point where an app is the wrong help, and asking for a human is the sensible thing rather than the last resort. Tell us what you want help with and practitioners who fit will offer to take you on. You choose who, or nobody."
+            : "There is a point where an app is the wrong help, and asking for a human is the sensible thing rather than the last resort. Mentara cannot introduce you to one yet — so here is how to find someone properly, which is what you actually need."}
         </p>
       </header>
 
+      {REFERRALS_OPEN ? (
+        <>
       <Notice>
         Every practitioner has had their registration checked by a person against the public
         register before they can see anything. Free, on every plan — and it stays that way.
@@ -189,6 +211,8 @@ export default async function FindHelpPage() {
           ))}
         </ul>
       </Card>
+        </>
+      ) : null}
 
       <FindHelpForm
         defaultName={memory?.display_name ?? ""}

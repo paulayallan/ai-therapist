@@ -211,7 +211,7 @@ export function blockedReason(therapist: Therapist): string | null {
     return `Referrals need an active listing. It is $${MONTHLY_FEE_AUD} a month and you can stop any time.`;
   }
   if (!therapist.accepting_clients) {
-    return "You are marked as not taking new clients. Turn that back on when you have capacity.";
+    return "You are paused. Switch \u201cTaking new clients\u201d back on below when you have capacity.";
   }
   return null;
 }

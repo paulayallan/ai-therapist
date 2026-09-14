@@ -60,7 +60,15 @@ export default function TherapistsLandingPage() {
         </ol>
       </section>
 
-      <section className="mt-10 rounded-2xl border border-line bg-surface p-6">
+      {/*
+        * Price and the two calls to action below are data-web-only. Apple
+        * Guideline 3.1.1 covers "buttons, external links, or other calls to
+        * action" pointing at a purchasing mechanism outside in-app purchase,
+        * and this is both the price and the button. The links into this page
+        * are already hidden inside the app; this is the second lock, for the
+        * case where someone arrives by a deep link or a typed URL.
+        */}
+      <section data-web-only className="mt-10 rounded-2xl border border-line bg-surface p-6">
         <h2 className="font-serif text-xl text-ink">What it costs</h2>
         <p className="mt-2 text-[2rem] font-medium leading-none text-ink">
           ${MONTHLY_FEE_AUD}
@@ -93,7 +101,7 @@ export default function TherapistsLandingPage() {
         </p>
       </section>
 
-      <div className="mt-10 flex flex-wrap items-center gap-4">
+      <div data-web-only className="mt-10 flex flex-wrap items-center gap-4">
         <Link
           href="/therapists/apply"
           className="inline-flex h-12 items-center rounded-xl bg-sage px-6 font-medium text-white transition-colors hover:bg-sage-deep"
@@ -101,10 +109,10 @@ export default function TherapistsLandingPage() {
           Apply to be listed
         </Link>
         <Link
-          href="/therapists/dashboard"
+          href="/auth?as=practitioner&next=/therapists/dashboard"
           className="text-sm text-muted underline underline-offset-4 hover:text-ink"
         >
-          Already applied
+          Already applied — sign in
         </Link>
       </div>
 

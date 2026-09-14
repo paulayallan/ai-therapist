@@ -1,15 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/card";
+import { FindHelpElsewhere } from "@/components/find-help-elsewhere";
 import {
   CONCERN_AREAS,
   DELIVERY_CHOICES,
   FUNDING_CHOICES,
   REFERRAL_LANGUAGES,
+  REFERRALS_OPEN,
 } from "@/lib/referrals";
+import { countryFromTimeZone, referralsAvailableIn, sortedCountries } from "@/lib/countries";
 import { STATES } from "@/lib/therapists";
 
 const FIELD =
@@ -24,6 +27,16 @@ export function FindHelpForm({ defaultName, defaultEmail }: { defaultName: strin
   const [note, setNote] = useState("");
   const [preferredLanguage, setPreferredLanguage] = useState<string>("English");
   const [deliveryPreference, setDeliveryPreference] = useState<string>("either");
+  // Timezone is only a first guess, and the field is theirs to change. Anything
+  // unrecognised starts on Australia rather than blank, because that is where
+  // every practitioner currently is.
+  const [country, setCountry] = useState<string>(() => {
+    try {
+      return countryFromTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone) ?? "AU";
+    } catch {
+      return "AU";
+    }
+  });
   const [state, setState] = useState<string>(STATES[0] ?? "NSW");
   const [funding, setFunding] = useState<string>("unsure");
   const [contactName, setContactName] = useState(defaultName);
@@ -50,6 +63,7 @@ export function FindHelpForm({ defaultName, defaultEmail }: { defaultName: strin
           note,
           preferredLanguage,
           deliveryPreference,
+          country,
           state,
           funding,
           contactName,
@@ -65,8 +79,57 @@ export function FindHelpForm({ defaultName, defaultEmail }: { defaultName: strin
     }
   }
 
+  const countries = useMemo(() => sortedCountries(), []);
+  /*
+   * Two separate reasons there may be no form, and they are not the same
+   * sentence to the person reading it. REFERRALS_OPEN is off while nobody is
+   * listed; referralsAvailableIn is about whether a register exists that we
+   * can check where they are.
+   */
+  const available = REFERRALS_OPEN && referralsAvailableIn(country);
+
+  /*
+   * The country question comes first and stands alone, because the answer
+   * decides whether there is a form at all. Asking someone to fill in six
+   * fields and then telling them there is nobody where they live would be
+   * the rudest possible way to find out.
+   */
+  const countryField = (
+    <div>
+      <label htmlFor="country" className="text-[0.95rem] font-medium text-ink">
+        What country are you in?
+      </label>
+      <select
+        id="country"
+        value={country}
+        onChange={(event) => setCountry(event.target.value)}
+        className={`${FIELD} mt-2 sm:max-w-sm`}
+      >
+        {countries.map((entry) => (
+          <option key={entry.code} value={entry.code}>
+            {entry.name}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+
+  if (!available) {
+    return (
+      <div className="space-y-8">
+        {countryField}
+        <FindHelpElsewhere
+          country={country}
+          reason={REFERRALS_OPEN ? "country" : "paused"}
+        />
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={submit} className="space-y-9">
+      {countryField}
+
       <fieldset>
         <legend className="font-serif text-lg text-ink">What would you want help with?</legend>
         <p className="mt-1 text-sm leading-relaxed text-muted">
@@ -167,7 +230,7 @@ export function FindHelpForm({ defaultName, defaultEmail }: { defaultName: strin
         </div>
         <div>
           <label htmlFor="state" className="text-[0.95rem] font-medium text-ink">
-            Where you are
+            State or territory
           </label>
           <select
             id="state"

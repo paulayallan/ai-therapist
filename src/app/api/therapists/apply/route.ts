@@ -95,9 +95,11 @@ export async function POST(request: Request) {
       delivery: data.delivery,
       state: data.state,
       bio: data.bio?.trim() || null,
-      // Both deliberately false at this point. Nothing is listed until a person
-      // has opened the register and looked.
-      accepting_clients: false,
+      // They applied because they want referrals, so this starts on. It is a
+      // pause switch for a full book, not a second door to find. Nothing is
+      // listed either way until a person has opened the register and looked,
+      // which is what `status` is for.
+      accepting_clients: true,
       status: "pending",
     })
     .select("id")

@@ -32,9 +32,14 @@ export type OfferView = {
  * which is what a person would actually want to read anyway.
  */
 export function ReferralOffers({
+  requestId,
   offers,
   accepted,
 }: {
+  /** Needed to withdraw. Withdrawing is about the request, not about an
+   * offer — and there may be no offers at all, which is exactly when someone
+   * is most likely to want out. */
+  requestId: string;
   offers: OfferView[];
   accepted: OfferView | null;
 }) {
@@ -43,7 +48,15 @@ export function ReferralOffers({
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
 
-  async function act(offerId: string, action: "accept" | "withdraw") {
+  async function accept(offerId: string) {
+    await send({ action: "accept", offerId });
+  }
+
+  async function withdraw() {
+    await send({ action: "withdraw", requestId });
+  }
+
+  async function send(body: Record<string, string>) {
     if (busy) return;
     setError(null);
     setBusy(true);
@@ -51,7 +64,7 @@ export function ReferralOffers({
       const response = await fetch("/api/referrals/accept", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ offerId, action }),
+        body: JSON.stringify(body),
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload?.error ?? "That did not work.");
@@ -166,7 +179,7 @@ export function ReferralOffers({
                   This sends {therapist.full_name} your name and email, and closes the other offers.
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  <Button disabled={busy} onClick={() => void act(offer.id, "accept")}>
+                  <Button disabled={busy} onClick={() => void accept(offer.id)}>
                     {busy ? "Sending…" : "Yes, choose them"}
                   </Button>
                   <Button variant="ghost" disabled={busy} onClick={() => setConfirming(null)}>
@@ -189,10 +202,7 @@ export function ReferralOffers({
         <Button
           variant="ghost"
           disabled={busy}
-          onClick={() => {
-            const first = offers[0];
-            if (first) void act(first.id, "withdraw");
-          }}
+          onClick={() => void withdraw()}
         >
           Withdraw my request
         </Button>

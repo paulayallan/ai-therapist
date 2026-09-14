@@ -29,7 +29,9 @@ export default function TermsPage() {
           <h2 className="font-serif text-xl text-ink">In an emergency</h2>
           <p className="mt-2.5 leading-relaxed text-muted">
             Mentara is not monitored. Nobody is reading what you write, and nothing here reaches a
-            human. If you are in danger or thinking about harming yourself, contact emergency
+            human unless you fill in the Find help form yourself — and even then, a practitioner
+            reads that form, not your journal, and not in a hurry. It is not a way to get help
+            tonight. If you are in danger or thinking about harming yourself, contact emergency
             services or a crisis line — the app lists numbers for your region on the{" "}
             <Link href="/sos" className="underline underline-offset-4">
               support page
@@ -78,6 +80,50 @@ export default function TermsPage() {
         </section>
 
         <section>
+          <h2 className="font-serif text-xl text-ink">Being matched with a practitioner</h2>
+          <p className="mt-2.5 leading-relaxed text-muted">
+            Mentara is an introduction service. When you ask to be matched, registered practitioners
+            who fit what you asked for can offer to take you on, and you choose one or none of
+            them. That is where Mentara&rsquo;s part ends. The care itself is between you and that
+            practitioner, on their terms, under their registration and their insurance. Mentara does
+            not provide it, supervise it, or see it.
+          </p>
+          <p className="mt-2.5 leading-relaxed text-muted">
+            Practitioners are listed only after a person has checked their registration on the
+            public register, and are removed when that registration lapses. That check is a check of
+            the register on a date — it is not a recommendation, an endorsement, or an opinion about
+            whether someone is right for you. Nobody pays to rank higher, and no fee is taken from
+            what you pay them.
+          </p>
+          <p className="mt-2.5 leading-relaxed text-muted">
+            There is no guarantee anyone will offer, or that an offer will arrive quickly. Nothing
+            is charged to you for an introduction.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="font-serif text-xl text-ink">If you are a practitioner</h2>
+          <p className="mt-2.5 leading-relaxed text-muted">
+            A listing costs $30 per month and renews until you cancel. You can cancel at any time
+            and keep the listing until the end of the period you have paid for. Paying does not buy
+            referrals, placement, or a number of them — it buys a listing, and some months there
+            will be nothing worth taking.
+          </p>
+          <p className="mt-2.5 leading-relaxed text-muted">
+            You are responsible for your own registration and insurance, for telling us when either
+            changes, and for keeping your listing true. Listings cannot claim outcomes, success
+            rates, or carry testimonials: section 133 of the National Law does not allow them for a
+            regulated health service, and that is on you as much as on us. Lapsed registration, or a
+            listing we cannot verify, ends the listing.
+          </p>
+          <p className="mt-2.5 leading-relaxed text-muted">
+            What you receive about a person is what they wrote on the form, and once they choose
+            you, their name and email. From that point they are your client and their information is
+            yours to handle under the law that applies to you.
+          </p>
+        </section>
+
+        <section>
           <h2 className="font-serif text-xl text-ink">No warranty</h2>
           <p className="mt-2.5 leading-relaxed text-muted">
             The service is provided as it is, without guarantees of availability or of any
@@ -90,7 +136,9 @@ export default function TermsPage() {
 
       <p className="mt-10 border-t border-line pt-6 text-sm text-faint">
         These terms are a starting point written for a product at this stage. Have a lawyer review
-        them before you take payment or launch publicly.
+        them before you take payment or launch publicly — in particular the practitioner sections,
+        and the written agreement that has to sit behind them covering how a person&rsquo;s
+        information is handled once it reaches a practitioner.
       </p>
     </main>
   );

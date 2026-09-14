@@ -130,14 +130,33 @@
     transition-duration: 0.001ms !important;
   }
 }
+
+
 /* ---------------------------------------------------------------- native app
- * Applied only inside the Capacitor shell (NativeShell sets data-native).
- * Mobile Safari and desktop keep ordinary web behaviour.
+ * Applied only inside the Capacitor shell (the root layout sets data-native
+ * before first paint). Mobile Safari and desktop keep ordinary web behaviour.
  */
 
 [data-native="true"] body {
   /* No rubber-band bounce past the top and bottom. */
   overscroll-behavior-y: none;
+}
+
+/*
+ * The practitioner entrances, closed inside the app.
+ *
+ * Apple Guideline 3.1.1: an app may not show buttons, links or other calls to
+ * action directing someone to a purchasing mechanism other than in-app
+ * purchase. A practitioner listing is $30/month through Stripe, so every door
+ * to it carries data-web-only and shuts here.
+ *
+ * Nothing is lost by this. No psychologist was ever going to register from
+ * inside a consumer anxiety app on their phone — they arrive from a browser,
+ * where the rule does not reach and every link is still present in the HTML,
+ * still indexable.
+ */
+[data-native="true"] [data-web-only] {
+  display: none !important;
 }
 
 [data-native="true"] nav,

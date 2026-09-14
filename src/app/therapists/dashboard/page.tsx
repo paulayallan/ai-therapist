@@ -4,9 +4,13 @@ import type { Metadata } from "next";
 import { Card, Empty, Notice, SectionHeading } from "@/components/ui/card";
 import { TherapistBillingButton } from "@/components/therapist-billing-button";
 import { TherapistRequests } from "@/components/therapist-requests";
+import { TherapistAvailability } from "@/components/therapist-availability";
+import { TherapistProfileForm } from "@/components/therapist-profile-form";
+import { TherapistReverify } from "@/components/therapist-reverify";
 import { createSupabaseServerClient, getSessionUser } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { matches } from "@/lib/referral-matching";
+import type { SentOffer } from "@/components/therapist-requests";
 import type {
   MatchedForPractitioner,
   ReferralRequest,
@@ -17,6 +21,7 @@ import {
   STATUS_LABEL,
   blockedReason,
   canReceiveReferrals,
+  registrationHasLapsed,
   registrationLabel,
   type Therapist,
 } from "@/lib/therapists";
@@ -34,7 +39,7 @@ function formatDate(value: string | null): string {
 
 export default async function TherapistDashboardPage() {
   const user = await getSessionUser();
-  if (!user) redirect("/auth?next=/therapists/dashboard");
+  if (!user) redirect("/auth?as=practitioner&next=/therapists/dashboard");
 
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase
@@ -78,6 +83,7 @@ export default async function TherapistDashboardPage() {
    */
   let openRequests: RequestForPractitioner[] = [];
   let matchedRequests: MatchedForPractitioner[] = [];
+  let sentOffers: SentOffer[] = [];
 
   if (live) {
     const admin = createSupabaseAdminClient();
@@ -90,7 +96,10 @@ export default async function TherapistDashboardPage() {
         .gt("expires_at", new Date().toISOString())
         .order("created_at", { ascending: true })
         .limit(100),
-      admin.from("referral_offers").select("request_id, status").eq("therapist_id", therapist.id),
+      admin
+        .from("referral_offers")
+        .select("id, request_id, status, message, created_at")
+        .eq("therapist_id", therapist.id),
     ]);
 
     const alreadyOffered = new Set((myOffers ?? []).map((offer) => offer.request_id as string));
@@ -108,6 +117,30 @@ export default async function TherapistDashboardPage() {
         funding: row.funding,
         created_at: row.created_at,
       }));
+
+    /*
+     * Offers still waiting. A practitioner who offers and then hears nothing
+     * has no idea whether it landed, and no way to take it back when their
+     * book fills — so both of those live here.
+     */
+    const waiting = (myOffers ?? []).filter((offer) => offer.status === "offered");
+    if (waiting.length > 0) {
+      const { data: waitingRows } = await admin
+        .from("referral_requests")
+        .select("id, concern_areas")
+        .in("id", waiting.map((offer) => offer.request_id as string));
+
+      const concerns = new Map(
+        (waitingRows ?? []).map((row) => [row.id as string, (row.concern_areas ?? []) as string[]]),
+      );
+
+      sentOffers = waiting.map((offer) => ({
+        id: offer.id as string,
+        message: (offer.message as string | null) ?? null,
+        created_at: offer.created_at as string,
+        concern_areas: concerns.get(offer.request_id as string) ?? [],
+      }));
+    }
 
     const acceptedIds = (myOffers ?? [])
       .filter((offer) => offer.status === "accepted")
@@ -195,6 +228,10 @@ export default async function TherapistDashboardPage() {
           </div>
         </dl>
 
+        {therapist.status === "verified" && registrationHasLapsed(therapist) ? (
+          <TherapistReverify registrationBody={therapist.registration_body} />
+        ) : null}
+
         {therapist.registration_conditions ? (
           <div className="mt-5 border-t border-line pt-5">
             <p className="label mb-1.5">Recorded on the register</p>
@@ -207,14 +244,22 @@ export default async function TherapistDashboardPage() {
         {/* Billing only appears once verification has passed. Nobody pays their
             way onto the list before a person has checked the register. */}
         {therapist.status === "verified" ? (
-          <div className="mt-5 border-t border-line pt-5">
+          <div className="mt-5 space-y-5 border-t border-line pt-5">
             <TherapistBillingButton live={live} />
+            {/* Only once they are paying. A switch that changes nothing is
+                worse than no switch. */}
+            {therapist.subscription_status === "active" ||
+            therapist.subscription_status === "past_due" ? (
+              <TherapistAvailability accepting={therapist.accepting_clients} />
+            ) : null}
           </div>
         ) : null}
       </Card>
 
+      {therapist.status !== "rejected" ? <TherapistProfileForm therapist={therapist} /> : null}
+
       {live ? (
-        <TherapistRequests open={openRequests} matched={matchedRequests} />
+        <TherapistRequests open={openRequests} matched={matchedRequests} sent={sentOffers} />
       ) : (
         <Card>
           <SectionHeading

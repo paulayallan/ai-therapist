@@ -17,6 +17,9 @@ export type ReferralRequest = {
   preferred_language: string | null;
   delivery_preference: "telehealth" | "in_person" | "either" | null;
   state: string | null;
+  /** ISO 3166-1 alpha-2. The column exists and defaults to AU; the type was
+   * missing it, so nothing could read it back. */
+  country: string;
   funding: "medicare_referral" | "private" | "unsure" | null;
   safety_level: string;
   status: ReferralStatus;
@@ -120,6 +123,26 @@ export const DELIVERY_LABEL: Record<string, string> = {
   in_person: "In a room",
   either: "Either",
 };
+
+/**
+ * Whether Mentara is taking referral requests at all.
+ *
+ * False while no practitioners are listed. A marketplace with nothing on one
+ * side is not a quiet marketplace — it is a form that takes what someone wrote
+ * on a hard night and answers with silence. The page was telling them
+ * practitioners could see it and that most requests hear back within a few
+ * days; with nobody listed, neither could happen.
+ *
+ * While this is false, /find-help shows what someone outside Australia already
+ * gets: the routes that work today. Nothing is taken, so nothing is left
+ * unanswered.
+ *
+ * Turn it on by hand, once practitioners exist AND you have walked the whole
+ * loop yourself — apply, verify, pay, offer, accept. Deliberately not wired to
+ * a live count of practitioners: the first one signing up should not silently
+ * open a flow nobody has ever run end to end.
+ */
+export const REFERRALS_OPEN = false;
 
 export const STATUS_COPY: Record<ReferralStatus, { title: string; body: string }> = {
   open: {

@@ -40,26 +40,56 @@ function Facts({ request }: { request: RequestForPractitioner }) {
   );
 }
 
+export type SentOffer = {
+  id: string;
+  message: string | null;
+  created_at: string;
+  concern_areas: string[];
+};
+
 /**
- * The requests a practitioner can take, and the people who chose them.
+ * The requests a practitioner can take, the offers they are waiting on, and
+ * the people who chose them.
  *
  * No name, no email, no age, nothing identifying until someone picks them.
  * What they get is what the person asked for and what the person chose to
- * write — which is enough to decide whether you can help, and not enough to
- * decide anything else.
+ * write — enough to decide whether you can help, and not enough to decide
+ * anything else.
  */
 export function TherapistRequests({
   open,
   matched,
+  sent,
 }: {
   open: RequestForPractitioner[];
   matched: MatchedForPractitioner[];
+  sent: SentOffer[];
 }) {
   const router = useRouter();
   const [openId, setOpenId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  async function withdraw(offerId: string) {
+    if (busy) return;
+    setError(null);
+    setBusy(true);
+    try {
+      const response = await fetch("/api/therapists/offers/withdraw", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ offerId }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload?.error ?? "That did not work.");
+      router.refresh();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "That did not work.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function offer(requestId: string) {
     if (busy) return;
@@ -109,6 +139,41 @@ export function TherapistRequests({
                   From here this is yours — your intake, your notes, your insurance. Mentara has no
                   part in the care and does not see it.
                 </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {sent.length > 0 ? (
+        <section>
+          <h2 className="mb-3 font-serif text-xl text-ink">Waiting on them</h2>
+          <p className="mb-3 max-w-prose text-sm leading-relaxed text-muted">
+            Offers you have sent that have not been answered yet. They may be reading several.
+          </p>
+          <div className="space-y-3">
+            {sent.map((entry) => (
+              <div key={entry.id} className="card p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <p className="font-medium text-ink">{entry.concern_areas.join(" · ")}</p>
+                  <span className="shrink-0 text-sm text-faint">
+                    offered {when(entry.created_at)}
+                  </span>
+                </div>
+                {entry.message ? (
+                  <p className="mt-3 whitespace-pre-wrap border-l-2 border-line pl-4 text-[0.95rem] leading-relaxed text-muted">
+                    {entry.message}
+                  </p>
+                ) : null}
+                <div className="mt-4">
+                  <Button
+                    variant="ghost"
+                    disabled={busy}
+                    onClick={() => void withdraw(entry.id)}
+                  >
+                    Withdraw this offer
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
