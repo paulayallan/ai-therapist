@@ -18,12 +18,24 @@ const PLANS: {
   id: SubscriptionPlan;
   name: string;
   pitch: string;
+  /**
+   * The fallback price, and only ever a fallback.
+   *
+   * Apple charges each person in their own currency off the price tier, so a
+   * hard-coded figure is right for one country and wrong everywhere else —
+   * and Mentara's users are mostly Australian while these tiers are set in US
+   * dollars. Inside the app this is replaced by what the store itself says.
+   * On the web, where there is no store to ask, it shows with the currency
+   * named so nobody is misled about which dollars these are.
+   */
+  price: string | null;
   outcomes: string[];
   limits: string[];
 }[] = [
   {
     id: "free",
     name: "Free",
+    price: null,
     pitch: "The parts you need at 3am, for as long as you use Mentara.",
     outcomes: [
       "The SOS flow, always, without signing in",
@@ -41,6 +53,7 @@ const PLANS: {
   {
     id: "pro",
     name: "Pro",
+    price: "US$14.99",
     pitch: "For when you want to know why it keeps happening, not just get through it.",
     outcomes: [
       "Trigger and pattern analysis across months, not days",
@@ -58,6 +71,7 @@ const PLANS: {
   {
     id: "premium",
     name: "Premium",
+    price: "US$24.99",
     pitch: "For the long view — a memory that holds what you have already worked through.",
     outcomes: [
       "The full library — twenty tools",
@@ -84,6 +98,12 @@ export function UpgradePlans({
   userId: string | null;
 }) {
   const [inNativeApp, setInNativeApp] = useState(false);
+  /**
+   * What the App Store says each plan costs, in the person's own currency.
+   * Null until it answers, and it may never answer — the fallback in PLANS
+   * covers that. A price is never worth blocking the page for.
+   */
+  const [storePrices, setStorePrices] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<SubscriptionPlan | null>(null);
   const router = useRouter();
@@ -105,8 +125,33 @@ export function UpgradePlans({
      * the native branch from a desktop browser.
      */
     const forced = new URLSearchParams(window.location.search).get("native") === "1";
-    setInNativeApp(isNativeApp() || forced);
-  }, []);
+    const native = isNativeApp() || forced;
+    setInNativeApp(native);
+
+    // Only the store knows what this person will actually be charged. Ask it,
+    // and if it does not answer, the USD fallback stands.
+    if (!native || !userId) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { nativePrice } = await import("@/lib/native-purchases");
+        const pairs = await Promise.all(
+          (["pro", "premium"] as const).map(
+            async (plan) => [plan, await nativePrice(plan, userId)] as const,
+          ),
+        );
+        if (cancelled) return;
+        const found: Record<string, string> = {};
+        for (const [plan, value] of pairs) if (value) found[plan] = value;
+        setStorePrices(found);
+      } catch {
+        // Cosmetic. The fallback price is already on screen.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
   /** In-app purchase. Used instead of web checkout inside the native shell. */
   async function buyInApp(plan: "pro" | "premium") {
@@ -201,6 +246,21 @@ export function UpgradePlans({
                   </span>
                 ) : null}
               </div>
+
+              {plan.price ? (
+                <p className="mt-1.5 text-ink">
+                  <span className="text-2xl font-medium">
+                    {storePrices[plan.id] ?? plan.price}
+                  </span>
+                  <span className="ml-1.5 text-sm text-muted">a month</span>
+                </p>
+              ) : (
+                <p className="mt-1.5 text-ink">
+                  <span className="text-2xl font-medium">Free</span>
+                  <span className="ml-1.5 text-sm text-muted">always</span>
+                </p>
+              )}
+
               <p className="mt-2 text-sm leading-relaxed text-muted">{plan.pitch}</p>
 
               <ul className="mt-4 flex-1 space-y-2">
@@ -260,10 +320,18 @@ export function UpgradePlans({
             {busy === "free" ? "Checking…" : "Restore a previous purchase"}
           </button>
           <p className="mt-2 text-xs leading-relaxed text-faint">
-            Subscriptions renew monthly and are managed in your Apple ID settings, where you can
-            also cancel.
+            Each plan is a monthly subscription that renews until you cancel, and it is managed in
+            your Apple ID settings, where you can also cancel. The price shown is what Apple will
+            charge in your own currency.
           </p>
         </div>
+      ) : null}
+
+      {!inNativeApp ? (
+        <p className="text-xs leading-relaxed text-faint">
+          Prices are shown in US dollars. What you are charged appears in your own currency before
+          you confirm, at the store&rsquo;s rate for your country.
+        </p>
       ) : null}
 
       <p className="text-xs leading-relaxed text-faint">
