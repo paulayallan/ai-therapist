@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { AdminReferralInbox, type InboxRequest } from "@/components/admin-referral-inbox";
-import { requireAdmin } from "@/lib/admin";
+import { AdminGate } from "@/components/admin-gate";
+import { adminState } from "@/lib/admin";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { REFERRALS_OPEN } from "@/lib/referrals";
 
@@ -20,12 +20,12 @@ export const dynamic = "force-dynamic";
  * unopened the promise is false — and the person who finds that out is someone
  * who asked for help and heard nothing.
  *
- * Not a 403 for non-admins, same as the verification queue: confirming an
- * admin screen lives at this URL is free reconnaissance.
+ * Refusals say which way they failed rather than showing a blank 404 — see
+ * adminState() for why that tradeoff is worth it.
  */
 export default async function AdminReferralsPage() {
-  const admin = await requireAdmin();
-  if (!admin) notFound();
+  const admin = await adminState();
+  if (admin.state !== "ok") return <AdminGate state={admin} next="/admin/referrals" />;
 
   const supabase = createSupabaseAdminClient();
   const { data } = await supabase

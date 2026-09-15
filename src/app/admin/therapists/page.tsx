@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { AdminTherapistQueue } from "@/components/admin-therapist-queue";
-import { requireAdmin } from "@/lib/admin";
+import { AdminGate } from "@/components/admin-gate";
+import { adminState } from "@/lib/admin";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { Therapist } from "@/lib/therapists";
 
@@ -10,13 +10,11 @@ export const metadata: Metadata = { title: "Verification", robots: { index: fals
 export const dynamic = "force-dynamic";
 
 /**
- * Not a 403. Someone who is not an admin is told this page does not exist,
- * because confirming that an admin screen lives at this URL is free
- * reconnaissance and costs us nothing to withhold.
+ * Refusals name their cause instead of showing a blank 404 — see adminState().
  */
 export default async function AdminTherapistsPage() {
-  const admin = await requireAdmin();
-  if (!admin) notFound();
+  const admin = await adminState();
+  if (admin.state !== "ok") return <AdminGate state={admin} next="/admin/therapists" />;
 
   const supabase = createSupabaseAdminClient();
   const { data } = await supabase
