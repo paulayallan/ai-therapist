@@ -95,11 +95,45 @@ export default async function DashboardPage() {
 
       {trialDaysLeft !== null ? <TrialCard daysLeft={trialDaysLeft} /> : null}
 
+      {/*
+        * The front door, and it took the data to work that out.
+        *
+        * Of the first 61 accounts, 34 used the chat and 8 ever did a check-in —
+        * and 20 people skipped onboarding entirely to get to it. It was card
+        * five, written as a plain underlined link, under a check-in form that
+        * told them it was "what makes your patterns worth anything". People
+        * had already voted and the screen was arranged the other way round.
+        *
+        * Below SOS rather than above it. Someone mid-panic needs one tap, and
+        * no amount of engagement is worth putting anything in front of that.
+        */}
+      <Link
+        href="/chat"
+        className="block rounded-2xl border border-sage/30 bg-sage-soft p-5 transition-colors hover:border-sage"
+      >
+        <span className="label mb-1.5 block">Talk it through</span>
+        <span className="block font-serif text-xl leading-snug text-ink">
+          {hasCheckedInToday
+            ? "Anything else on your mind?"
+            : name
+              ? `What's going on, ${name}?`
+              : "What's going on today?"}
+        </span>
+        <span className="mt-2 block text-sm leading-relaxed text-muted">
+          Say it however it comes out — half a sentence is fine. It knows what you have told it
+          before, and it will not hand you a breathing exercise unless that is actually what you
+          need.
+        </span>
+        <span className="mt-3.5 inline-flex h-11 items-center rounded-xl bg-sage px-5 font-medium text-white">
+          Start talking
+        </span>
+      </Link>
+
       <Card>
         <SectionHeading
           eyebrow="Check in"
           title="How is today going?"
-          hint="Thirty seconds. This is what makes your patterns worth anything."
+          hint="Thirty seconds, no typing. Do it a few times and the patterns start showing up."
         />
         <CheckInForm recent={checkIns} />
       </Card>
@@ -146,17 +180,6 @@ export default async function DashboardPage() {
         </Card>
       ) : null}
 
-      <Card>
-        <SectionHeading
-          eyebrow="Talk it through"
-          title="Support chat"
-          hint="For when writing alone isn't enough and you want something back."
-        />
-        <Link href="/chat" className="text-sm text-sage-deep underline underline-offset-4">
-          Open support chat
-        </Link>
-      </Card>
-
       {/*
         * Deliberately a card and not a tab. A permanent tab saying "find a real
         * therapist" tells someone every single day that this app is not enough
@@ -166,7 +189,7 @@ export default async function DashboardPage() {
         <SectionHeading
           eyebrow="When an app isn't the right help"
           title="Talk to an actual person"
-          hint="Verified practitioners see what you ask for and offer to take you on. You choose who, or nobody."
+          hint="Tell us what you are looking for and a person here reads it and emails you back. Free, on every plan."
         />
         <Link href="/find-help" className="text-sm text-sage-deep underline underline-offset-4">
           Find a person
