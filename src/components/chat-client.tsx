@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/card";
 import { CrisisCard, CrisisHint } from "@/components/crisis-card";
 import { clientLocalDate } from "@/lib/date";
+import { TOOLS } from "@/lib/tools";
+import { SCIENCE_TOPICS } from "@/lib/science";
 import type { ChatMessage, StructuredCoachResponse } from "@/lib/types";
 
 type Bubble = {
