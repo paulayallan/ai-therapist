@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, Notice } from "@/components/ui/card";
 import { CrisisCard } from "@/components/crisis-card";
 import { clientLocalDate } from "@/lib/date";
+import { useSearchParams } from "next/navigation";
 import { SCIENCE_TAGS, SCIENCE_TOPICS, type ScienceTopic } from "@/lib/science";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +27,22 @@ export function ScienceCheckClient({ aiConsent }: { aiConsent: boolean }) {
   const [crisis, setCrisis] = useState(false);
 
   const shown = tag ? SCIENCE_TOPICS.filter((topic) => topic.tag === tag) : SCIENCE_TOPICS;
+
+  /*
+   * Arrive on the right explanation, already open.
+   *
+   * The chat links here with ?topic=<id> when someone asks what their body is
+   * doing. Landing on a grid of twelve questions and having to find the one
+   * you were just promised is the kind of small friction that loses a
+   * frightened person.
+   */
+  const params = useSearchParams();
+  const requested = params.get("topic");
+  useEffect(() => {
+    if (!requested) return;
+    const match = SCIENCE_TOPICS.find((topic) => topic.id === requested);
+    if (match) setOpen(match);
+  }, [requested]);
 
   async function ask() {
     const text = question.trim();

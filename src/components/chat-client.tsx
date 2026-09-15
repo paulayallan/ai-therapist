@@ -271,10 +271,52 @@ function StructuredExtras({ structured }: { structured: StructuredCoachResponse 
     structured.exercise ? { label: "Worth trying", body: structured.exercise } : null,
   ].filter(Boolean) as { label: string; body: string }[];
 
-  if (items.length === 0 && !structured.reflectionQuestion) return null;
+  /*
+   * The tool and the explanation are NOT folded away with the rest.
+   *
+   * Someone mid-panic who has just been told which thing to do should not have
+   * to find and open a disclosure triangle to get to it. These are the reply
+   * doing something rather than commenting on it, so they sit in the open as
+   * things you can tap.
+   */
+  const tool = structured.toolId ? TOOLS.find((entry) => entry.id === structured.toolId) : null;
+  const science = structured.scienceId
+    ? SCIENCE_TOPICS.find((entry) => entry.id === structured.scienceId)
+    : null;
+
+  if (items.length === 0 && !structured.reflectionQuestion && !tool && !science) return null;
 
   return (
     <div className="mt-4 max-w-prose space-y-3.5">
+      {tool ? (
+        <Link
+          href={`/tools/${tool.id}`}
+          className="flex items-center justify-between gap-3 rounded-xl border border-sage/30 bg-sage-soft px-4 py-3 transition-colors hover:border-sage"
+        >
+          <span>
+            <span className="block text-[0.95rem] font-medium text-ink">{tool.title}</span>
+            <span className="mt-0.5 block text-sm text-muted">
+              {tool.minutes} min · guided, one step at a time
+            </span>
+          </span>
+          <span aria-hidden="true" className="shrink-0 text-sage-deep">
+            &rarr;
+          </span>
+        </Link>
+      ) : null}
+
+      {science ? (
+        <Link
+          href={`/science-check?topic=${science.id}`}
+          className="flex items-center justify-between gap-3 rounded-xl border border-line bg-surface px-4 py-3 transition-colors hover:border-sage/40"
+        >
+          <span className="text-[0.95rem] leading-snug text-ink">{science.question}</span>
+          <span aria-hidden="true" className="shrink-0 text-sage-deep">
+            &rarr;
+          </span>
+        </Link>
+      ) : null}
+
       {structured.reflectionQuestion ? (
         <p className="border-l-2 border-sage/35 pl-4 font-serif text-[1.05rem] leading-snug text-ink">
           {structured.reflectionQuestion}

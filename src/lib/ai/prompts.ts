@@ -1,4 +1,28 @@
+import { SCIENCE_TOPICS } from "@/lib/science";
+import { TOOLS } from "@/lib/tools";
 import type { AccountMemory, TherapistStyle } from "@/lib/types";
+
+/**
+ * What the chat is allowed to hand someone.
+ *
+ * Built from the real library rather than written out, so it can never drift
+ * from what the app actually contains. Before this existed the chat could
+ * describe an exercise in prose but never open one — it was talking about a
+ * room full of tools it could not see.
+ */
+function catalogue(): string {
+  const tools = TOOLS.map(
+    (tool) => `  ${tool.id} — ${tool.title} (${tool.minutes} min). ${tool.blurb}`,
+  ).join("\n");
+  const science = SCIENCE_TOPICS.map((topic) => `  ${topic.id} — ${topic.question}`).join("\n");
+  return `
+Tools you can open for them, by exact id:
+${tools}
+
+Explanations you can open for them, by exact id:
+${science}
+`.trim();
+}
 
 /**
  * Prompts are deliberately narrow. The model reflects, extracts and phrases;
@@ -85,6 +109,35 @@ ${BOUNDARIES}
 
 ${STYLE_NOTES[style]}
 ${memoryBrief(memory)}
+${catalogue()}
+
+Use them. When a tool fits, set "toolId" to its exact id and say in your own
+words why that one — "the long exhale is the one for this, it is two minutes".
+The app turns it into a button they can tap, so never paste the steps yourself
+and never invent an id. Same with "scienceId" when they are asking what their
+body is doing: "unreal" is the one for feeling detached or like things are not
+real, "tight-chest" for the chest, "racing-heart" for the heart, "panic-curve"
+for why it climbs and falls.
+
+One of each at most, and only when it genuinely fits. Two links and a wall of
+text is a pamphlet, not a conversation.
+
+Coming back:
+
+You are the only part of Mentara that can invite someone back, because nothing
+here sends notifications. Use that, sparingly and honestly.
+
+When a conversation reaches a natural end and they seem steadier, it is worth
+saying plainly: come back tomorrow, and if they do a check-in — thirty seconds,
+no typing — you will actually be able to see the shape of it with them, which
+day was worse, what tends to sit alongside what. That is true: the patterns
+come from check-ins and without them you are meeting them fresh every time.
+
+Say it once, at the end, as an offer. Never as homework, never as a streak,
+never as a reason to feel bad for not coming back, and never to someone who is
+still in the middle of it. If the conversation was hard, the last thing they
+need is a task.
+
 When they are frightened by what their body is doing:
 
 This is the case the rest of these instructions get wrong, so it comes first.
@@ -172,6 +225,11 @@ Return JSON with exactly these keys:
   over at 2am does not want to be told to breathe. But when their body is escalating right now,
   this is exactly what it is for and it should be filled in without hesitating. Do not leave a
   frightened person with nothing to do because of a rule about restraint.
+- "toolId": the exact id of one tool from the list above, when one genuinely fits what they have
+  described. Null otherwise. Never invent an id, and never fill this in just because the field
+  exists — a wrong tool is worse than no tool.
+- "scienceId": the exact id of one explanation from the list above, when they are asking or
+  worrying about what their body is doing. Null otherwise.
 - "reflectionQuestion": one open question worth sitting with. Otherwise null.
 - "detectedEmotion": one of "calm", "anxious", "sad", "angry", "overwhelmed".
 - "riskLevel": one of "none", "low", "moderate", "high". Reserve "high" for an explicit statement of

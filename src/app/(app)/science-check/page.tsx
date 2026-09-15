@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { ScienceCheckClient } from "@/components/science-check-client";
 import { getProfile } from "@/lib/data";
@@ -22,7 +23,11 @@ export default async function ScienceCheckPage() {
         </p>
       </header>
 
-      <ScienceCheckClient aiConsent={Boolean(profile?.ai_data_consent_granted)} />
+      {/* Suspense because the client reads ?topic= to open the explanation the
+        * chat sent them to. Without a boundary, Next refuses to build the page. */}
+      <Suspense fallback={null}>
+        <ScienceCheckClient aiConsent={Boolean(profile?.ai_data_consent_granted)} />
+      </Suspense>
 
       <p className="text-xs leading-relaxed text-faint">
         These describe common mechanisms. They are not a diagnosis, and they cannot tell you what is

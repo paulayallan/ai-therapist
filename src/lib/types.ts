@@ -197,6 +197,10 @@ export type StructuredCoachResponse = {
   thinkingPattern: string | null;
   reframe: string | null;
   exercise: string | null;
+  /** A real tool id from TOOLS, so the reply can open it. Null if none fits. */
+  toolId: string | null;
+  /** A real topic id from SCIENCE_TOPICS, for "why is my body doing this". */
+  scienceId: string | null;
   reflectionQuestion: string | null;
   detectedEmotion: EmotionalState;
   riskLevel: "none" | "low" | "moderate" | "high";

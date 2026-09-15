@@ -1,4 +1,16 @@
 import { z } from "zod";
+import { TOOLS } from "@/lib/tools";
+import { SCIENCE_TOPICS } from "@/lib/science";
+
+/*
+ * The model picks from the real library or picks nothing.
+ *
+ * `.catch(null)` rather than a hard failure on purpose: an invented id should
+ * cost a link, not the whole reply. Someone mid-panic must never get "that
+ * reply didn't come back properly" because the model guessed a slug.
+ */
+const TOOL_IDS = TOOLS.map((tool) => tool.id);
+const SCIENCE_IDS = SCIENCE_TOPICS.map((topic) => topic.id);
 import { PANIC_LOCATIONS, PANIC_RECOVERY, PANIC_TRIGGERS } from "@/lib/types";
 
 const short = z.string().trim().min(1).max(280);
@@ -12,6 +24,18 @@ export const coachResponseSchema = z.object({
   thinkingPattern: z.string().trim().max(300).nullable().default(null),
   reframe: z.string().trim().max(400).nullable().default(null),
   exercise: z.string().trim().max(400).nullable().default(null),
+  toolId: z
+    .string()
+    .refine((value) => TOOL_IDS.includes(value))
+    .nullable()
+    .catch(null)
+    .default(null),
+  scienceId: z
+    .string()
+    .refine((value) => SCIENCE_IDS.includes(value))
+    .nullable()
+    .catch(null)
+    .default(null),
   reflectionQuestion: z.string().trim().max(300).nullable().default(null),
   detectedEmotion: emotion.default("calm"),
   riskLevel: z.enum(["none", "low", "moderate", "high"]).default("none"),
