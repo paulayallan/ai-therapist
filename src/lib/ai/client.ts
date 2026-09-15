@@ -101,16 +101,25 @@ const REASONING_MODEL = /^(gpt-5|o[1345])/i;
 const REASONING_HEADROOM = 1400;
 
 /**
- * How long the model is allowed to think before it starts writing.
+ * One attempt for the chat, two for everything else.
  *
- * The chat is the one place where thinking time is felt. Nothing streams —
- * the person watches a spinner until the whole JSON is done — so every
- * reasoning token is a second of someone anxious staring at "thinking".
- * "minimal" is the difference between a reply that arrives and one they give
- * up on. The background tasks nobody is waiting on can afford to think.
+ * The retry below re-runs the whole call with double the budget when a
+ * reasoning model thinks its way through the budget and returns nothing. For
+ * a background job that is a cheap save. For the chat it is a disaster: two
+ * sequential round trips, and a measured thirty seconds of someone anxious
+ * watching a spinner with no idea whether anything is coming.
+ *
+ * So the chat gets one attempt and a budget big enough that it should not
+ * need a second. Nothing streams yet, so every second here is felt.
  */
-function reasoningEffort(task: AiTask): "minimal" | "low" {
-  return task === "coach" ? "minimal" : "low";
+function attemptsFor(task: AiTask): number {
+  return task === "coach" ? 1 : 2;
+}
+
+/** Room to think. The chat gets more up front precisely because it only gets
+ * one go at it. */
+function headroomFor(task: AiTask): number {
+  return task === "coach" ? 2600 : REASONING_HEADROOM;
 }
 
 function isUnknownModel(error: unknown): boolean {
@@ -144,18 +153,20 @@ export async function completeJson(options: {
 
   for (const model of chain) {
     const reasons = REASONING_MODEL.test(model);
-    const budget = reasons ? options.maxTokens + REASONING_HEADROOM : options.maxTokens;
+    const budget = reasons ? options.maxTokens + headroomFor(options.task) : options.maxTokens;
+    const attempts =
+      attemptsFor(options.task) === 1 ? [budget] : [budget, budget * 2];
 
     try {
       // Two attempts on the same model: if it thought its way through the
       // whole budget and returned nothing, give it more room once.
-      for (const tokens of [budget, budget * 2]) {
+      for (const tokens of attempts) {
         const params = {
           model,
           response_format: { type: "json_object" as const },
           max_completion_tokens: tokens,
           messages: options.messages,
-          ...(reasons ? { reasoning_effort: reasoningEffort(options.task) } : {}),
+          ...(reasons ? { reasoning_effort: "low" as const } : {}),
         };
 
         const completion = await client.chat.completions.create(params);
