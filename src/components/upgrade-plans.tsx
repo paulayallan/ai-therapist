@@ -19,14 +19,9 @@ const PLANS: {
   name: string;
   pitch: string;
   /**
-   * The fallback price, and only ever a fallback.
-   *
-   * Apple charges each person in their own currency off the price tier, so a
-   * hard-coded figure is right for one country and wrong everywhere else —
-   * and Mentara's users are mostly Australian while these tiers are set in US
-   * dollars. Inside the app this is replaced by what the store itself says.
-   * On the web, where there is no store to ask, it shows with the currency
-   * named so nobody is misled about which dollars these are.
+   * What this plan costs, shown as set: US dollars, the same figure
+   * everywhere. Deliberately a fixed string rather than anything fetched —
+   * the price is a decision, not something the app should be guessing at.
    */
   price: string | null;
   outcomes: string[];
@@ -98,12 +93,6 @@ export function UpgradePlans({
   userId: string | null;
 }) {
   const [inNativeApp, setInNativeApp] = useState(false);
-  /**
-   * What the App Store says each plan costs, in the person's own currency.
-   * Null until it answers, and it may never answer — the fallback in PLANS
-   * covers that. A price is never worth blocking the page for.
-   */
-  const [storePrices, setStorePrices] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<SubscriptionPlan | null>(null);
   const router = useRouter();
@@ -128,30 +117,7 @@ export function UpgradePlans({
     const native = isNativeApp() || forced;
     setInNativeApp(native);
 
-    // Only the store knows what this person will actually be charged. Ask it,
-    // and if it does not answer, the USD fallback stands.
-    if (!native || !userId) return;
-    let cancelled = false;
-    void (async () => {
-      try {
-        const { nativePrice } = await import("@/lib/native-purchases");
-        const pairs = await Promise.all(
-          (["pro", "premium"] as const).map(
-            async (plan) => [plan, await nativePrice(plan, userId)] as const,
-          ),
-        );
-        if (cancelled) return;
-        const found: Record<string, string> = {};
-        for (const [plan, value] of pairs) if (value) found[plan] = value;
-        setStorePrices(found);
-      } catch {
-        // Cosmetic. The fallback price is already on screen.
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [userId]);
+  }, []);
 
   /** In-app purchase. Used instead of web checkout inside the native shell. */
   async function buyInApp(plan: "pro" | "premium") {
@@ -250,7 +216,7 @@ export function UpgradePlans({
               {plan.price ? (
                 <p className="mt-1.5 text-ink">
                   <span className="text-2xl font-medium">
-                    {storePrices[plan.id] ?? plan.price}
+                    {plan.price}
                   </span>
                   <span className="ml-1.5 text-sm text-muted">a month</span>
                 </p>
@@ -321,17 +287,9 @@ export function UpgradePlans({
           </button>
           <p className="mt-2 text-xs leading-relaxed text-faint">
             Each plan is a monthly subscription that renews until you cancel, and it is managed in
-            your Apple ID settings, where you can also cancel. The price shown is what Apple will
-            charge in your own currency.
+            your Apple ID settings, where you can also cancel.
           </p>
         </div>
-      ) : null}
-
-      {!inNativeApp ? (
-        <p className="text-xs leading-relaxed text-faint">
-          Prices are shown in US dollars. What you are charged appears in your own currency before
-          you confirm, at the store&rsquo;s rate for your country.
-        </p>
       ) : null}
 
       <p className="text-xs leading-relaxed text-faint">
