@@ -100,6 +100,19 @@ type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 const REASONING_MODEL = /^(gpt-5|o[1345])/i;
 const REASONING_HEADROOM = 1400;
 
+/**
+ * How long the model is allowed to think before it starts writing.
+ *
+ * The chat is the one place where thinking time is felt. Nothing streams —
+ * the person watches a spinner until the whole JSON is done — so every
+ * reasoning token is a second of someone anxious staring at "thinking".
+ * "minimal" is the difference between a reply that arrives and one they give
+ * up on. The background tasks nobody is waiting on can afford to think.
+ */
+function reasoningEffort(task: AiTask): "minimal" | "low" {
+  return task === "coach" ? "minimal" : "low";
+}
+
 function isUnknownModel(error: unknown): boolean {
   const err = error as { status?: number; code?: string; message?: string } | null;
   if (!err) return false;
@@ -142,7 +155,7 @@ export async function completeJson(options: {
           response_format: { type: "json_object" as const },
           max_completion_tokens: tokens,
           messages: options.messages,
-          ...(reasons ? { reasoning_effort: "low" as const } : {}),
+          ...(reasons ? { reasoning_effort: reasoningEffort(options.task) } : {}),
         };
 
         const completion = await client.chat.completions.create(params);

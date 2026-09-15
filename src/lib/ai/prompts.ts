@@ -11,8 +11,11 @@ import type { AccountMemory, TherapistStyle } from "@/lib/types";
  * room full of tools it could not see.
  */
 function catalogue(): string {
+  // Title, length and tag only. The blurbs read well but they were six hundred
+  // tokens of input on every single message, and the model picks just as well
+  // from the name — a list is for choosing from, not for reading.
   const tools = TOOLS.map(
-    (tool) => `  ${tool.id} — ${tool.title} (${tool.minutes} min). ${tool.blurb}`,
+    (tool) => `  ${tool.id} — ${tool.title} · ${tool.minutes} min · ${tool.tag}`,
   ).join("\n");
   const science = SCIENCE_TOPICS.map((topic) => `  ${topic.id} — ${topic.question}`).join("\n");
   return `
