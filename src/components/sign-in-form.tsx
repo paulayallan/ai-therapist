@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -93,7 +94,16 @@ export function SignInForm() {
         />
         {mode === "signup" ? (
           <p className="mt-1.5 text-xs text-faint">At least 8 characters.</p>
-        ) : null}
+        ) : (
+          <p className="mt-1.5 text-right">
+            <Link
+              href="/auth/forgot"
+              className="text-xs text-muted underline underline-offset-4 hover:text-ink"
+            >
+              Forgot your password?
+            </Link>
+          </p>
+        )}
       </div>
 
       {error ? (
