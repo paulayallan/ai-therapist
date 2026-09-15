@@ -10,7 +10,11 @@ import {
   STATES,
 } from "@/lib/therapists";
 
-const deliveryValues = DELIVERY_OPTIONS.map((entry) => entry.value);
+// Annotated as string[] deliberately. Without it this infers
+// ("telehealth" | "in_person")[], and .includes() then refuses the plain
+// string zod hands it — which is exactly what broke the build. The apply
+// route already annotates registrationValues the same way; this one was missed.
+const deliveryValues: string[] = DELIVERY_OPTIONS.map((entry) => entry.value);
 
 const profileSchema = z.object({
   fullName: z.string().trim().min(2).max(120),

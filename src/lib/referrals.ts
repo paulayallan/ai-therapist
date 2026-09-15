@@ -125,32 +125,31 @@ export const DELIVERY_LABEL: Record<string, string> = {
 };
 
 /**
- * Whether Mentara is taking referral requests at all.
+ * Whether Mentara is taking referral requests.
  *
- * False while no practitioners are listed. A marketplace with nothing on one
- * side is not a quiet marketplace — it is a form that takes what someone wrote
- * on a hard night and answers with silence. The page was telling them
- * practitioners could see it and that most requests hear back within a few
- * days; with nobody listed, neither could happen.
+ * This is on, and what it means has changed. There is still no marketplace —
+ * no practitioner is listed, so nobody is going to "see your request and
+ * offer". What happens instead is that a person at Mentara reads every
+ * request and emails the address on it. Slower, and entirely honest, because
+ * it is a promise one human can actually keep.
  *
- * While this is false, /find-help shows what someone outside Australia already
- * gets: the routes that work today. Nothing is taken, so nothing is left
- * unanswered.
- *
- * Turn it on by hand, once practitioners exist AND you have walked the whole
- * loop yourself — apply, verify, pay, offer, accept. Deliberately not wired to
- * a live count of practitioners: the first one signing up should not silently
- * open a flow nobody has ever run end to end.
+ * That promise has a dependency, and it is not code: somebody has to open
+ * /admin/referrals and read them. If that stops happening, turn this to false
+ * — /find-help then shows the routes that work without us (the AHPRA
+ * register, a GP mental health treatment plan, Find a Helpline) and takes
+ * nothing it cannot answer. A form that collects what someone wrote on a hard
+ * night and replies with silence is worse than no form.
  */
-export const REFERRALS_OPEN = false;
+export const REFERRALS_OPEN = true;
 
 export const STATUS_COPY: Record<ReferralStatus, { title: string; body: string }> = {
   open: {
-    title: "Your request is with practitioners",
-    // Says "come back and look" rather than "we will email you", because
-    // Mentara does not send email yet. Promising one would be a small lie that
-    // someone discovers by waiting a week for it.
-    body: "Practitioners who match what you asked for can see it and offer to take you on. Offers appear on this page — there is no email yet, so check back in a day or two. Most requests hear something within a few days.",
+    title: "We have your request",
+    body:
+      "A person here reads every one of these — it is not an automatic match. "
+      + "We will email you at the address you gave us, usually within a few days, either with "
+      + "someone we think fits or with an honest answer that we could not find one. "
+      + "Nothing has been passed to anyone yet, and nothing will be without asking you first.",
   },
   matched: {
     title: "You have been matched",
@@ -158,7 +157,11 @@ export const STATUS_COPY: Record<ReferralStatus, { title: string; body: string }
   },
   held: {
     title: "We have not sent this on yet",
-    body: "Someone will read it properly first. In the meantime, the numbers below are answered around the clock by people who are trained for exactly this.",
+    body:
+      "Someone here will read it properly before anything else happens, and will email you. "
+      + "But a referral takes days, and some of what you wrote sounds like it might not keep "
+      + "that long — the numbers below are answered right now, around the clock, by people "
+      + "trained for exactly this.",
   },
   closed: {
     title: "This request is closed",

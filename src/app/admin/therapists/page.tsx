@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { AdminTherapistQueue } from "@/components/admin-therapist-queue";
@@ -37,6 +38,13 @@ export default async function AdminTherapistsPage() {
         <p className="mt-3 max-w-prose leading-relaxed text-muted">
           Open the register in another tab and check the number, the name and whether anything is
           recorded against it. Nobody receives a referral until you have.
+        </p>
+        <p className="mt-3 max-w-prose text-sm leading-relaxed text-muted">
+          The{" "}
+          <Link href="/admin/referrals" className="text-sage-deep underline underline-offset-4">
+            referral inbox
+          </Link>{" "}
+          is the other half of this — people waiting on an email from you.
         </p>
       </header>
 

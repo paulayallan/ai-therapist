@@ -52,14 +52,19 @@ export default async function FindHelpPage() {
      * told to the one person who asked for help. Say what is true and give
      * them the routes that work today instead.
      */
+    /*
+     * If matching is ever switched off, someone with a request already in
+     * flight must not be left reading "we will email you" from a system that
+     * has stopped. Tell them plainly and show the routes that work instead.
+     */
     const copy =
       !REFERRALS_OPEN && (current.status === "open" || current.status === "held")
         ? {
-            title: "We are not matching people yet",
+            title: "We are not able to answer this one",
             body:
-              "Your request is here and nothing was sent to anyone — there is nobody listed to send it to. "
-              + "Rather than leave you waiting on something that is not coming, below is what works today. "
-              + "You can withdraw this whenever you want.",
+              "Your request is here and nothing was sent to anyone. We are not matching people "
+              + "at the moment, so rather than let you wait on an email that is not coming, "
+              + "below is what works today. You can withdraw this whenever you want.",
           }
         : STATUS_COPY[current.status];
 
@@ -179,16 +184,16 @@ export default async function FindHelpPage() {
         </h1>
         <p className="mt-3 max-w-prose leading-relaxed text-muted">
           {REFERRALS_OPEN
-            ? "There is a point where an app is the wrong help, and asking for a human is the sensible thing rather than the last resort. Tell us what you want help with and practitioners who fit will offer to take you on. You choose who, or nobody."
-            : "There is a point where an app is the wrong help, and asking for a human is the sensible thing rather than the last resort. Mentara cannot introduce you to one yet — so here is how to find someone properly, which is what you actually need."}
+            ? "There is a point where an app is the wrong help, and asking for a human is the sensible thing rather than the last resort. Tell us what you are looking for and we will email you — a person here reads every one of these."
+            : "There is a point where an app is the wrong help, and asking for a human is the sensible thing rather than the last resort. Mentara cannot introduce you to one at the moment — so here is how to find someone properly, which is what you actually need."}
         </p>
       </header>
 
       {REFERRALS_OPEN ? (
         <>
       <Notice>
-        Every practitioner has had their registration checked by a person against the public
-        register before they can see anything. Free, on every plan — and it stays that way.
+        Nobody is introduced to you without having had their registration checked by a person
+        against the public register first. Free, on every plan — and it stays that way.
       </Notice>
 
       <Card>
@@ -199,8 +204,8 @@ export default async function FindHelpPage() {
         />
         <ul className="space-y-3 text-[0.95rem] leading-relaxed text-muted">
           {[
-            "This is an introduction, not an appointment. Expect a few days, not the same night.",
-            "Practitioners see what you write and the preferences you set. They do not see your name or email until you have picked one of them.",
+            "This is an introduction, not an appointment. Expect a few days by email, not the same night. If tonight is the problem, the rescue flow and the crisis numbers work now.",
+            "A person at Mentara reads what you write — that is how the match is made, not by an algorithm. Nothing is passed to a practitioner until we have asked you.",
             "Your journal, check-ins and anything you have said in Support chat are never shared. Only this form is.",
             "You can withdraw at any point, and you never have to accept anyone.",
           ].map((line) => (

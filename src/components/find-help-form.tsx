@@ -301,6 +301,9 @@ export function FindHelpForm({ defaultName, defaultEmail }: { defaultName: strin
             <label htmlFor="contact-email" className="text-[0.95rem] font-medium text-ink">
               Email to reach you on
             </label>
+            <p className="mt-1 text-sm leading-relaxed text-muted">
+              This is where our reply goes, so check it is one you actually read.
+            </p>
             <input
               id="contact-email"
               type="email"
@@ -315,7 +318,7 @@ export function FindHelpForm({ defaultName, defaultEmail }: { defaultName: strin
         {error ? <Notice tone="alert">{error}</Notice> : null}
 
         <Button type="submit" size="lg" disabled={busy || concernAreas.length === 0}>
-          {busy ? "Sending…" : "Send this to practitioners"}
+          {busy ? "Sending…" : "Send this and we will email you"}
         </Button>
 
         <p className="max-w-prose text-sm leading-relaxed text-muted">
