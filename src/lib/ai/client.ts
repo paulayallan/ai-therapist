@@ -20,7 +20,21 @@ export type AiTask =
   | "transcribe";
 
 const DEFAULTS: Record<AiTask, string> = {
-  coach: "gpt-5-mini",
+  /*
+   * The chat is the only task a person waits on, so it is the only one that
+   * cannot afford to think first.
+   *
+   * gpt-5-mini reasons before it writes. Those reasoning tokens are invisible,
+   * they are not streamed, and they were most of a measured thirty-second
+   * reply — someone anxious staring at a spinner with no idea anything is
+   * coming. gpt-4.1-mini starts writing immediately. The prompt above it is
+   * long and very prescriptive, which is exactly the kind of instruction a
+   * non-reasoning model follows well.
+   *
+   * Reversible without a deploy: set OPENAI_MODEL_COACH in Vercel to go back
+   * to gpt-5-mini if the replies lose something that matters.
+   */
+  coach: "gpt-4.1-mini",
   journal: "gpt-5-mini",
   insights: "gpt-5-mini",
   twin_profile: "gpt-5-mini",

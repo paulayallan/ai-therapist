@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import type { CookieToSet } from "@/lib/supabase/cookies";
@@ -26,11 +27,20 @@ export async function createSupabaseServerClient() {
   });
 }
 
-/** Returns the signed-in user, or null. Never throws on an anonymous visitor. */
-export async function getSessionUser() {
+/**
+ * The signed-in user, or null. Never throws on an anonymous visitor.
+ *
+ * Wrapped in React's cache so one render pass makes one call. getUser() is a
+ * round trip to the auth server in Singapore, and a page that asks for the
+ * user in a layout and again in the page itself was paying for it twice —
+ * half a second of nothing, before a single query had run.
+ *
+ * The cache lives for one request only, so this never serves a stale session.
+ */
+export const getSessionUser = cache(async () => {
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   return user;
-}
+});
