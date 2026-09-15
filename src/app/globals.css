@@ -137,9 +137,55 @@
  * before first paint). Mobile Safari and desktop keep ordinary web behaviour.
  */
 
+/*
+ * No rubber band, so the bars stay where they are put.
+ *
+ * This was on `body` alone, which is not enough on iOS: the document scroll
+ * takes overscroll-behavior from the ROOT element, so the page still bounced
+ * past its ends. When it bounces, the sticky header slides down with it and
+ * the fixed tab bar lifts off the bottom — the two things that looked broken.
+ *
+ * height: 100% matters too. Without a definite height there is no scroll
+ * container for the rule to apply to and iOS ignores it.
+ */
+[data-native="true"],
 [data-native="true"] body {
-  /* No rubber-band bounce past the top and bottom. */
+  height: 100%;
+  overscroll-behavior: none;
   overscroll-behavior-y: none;
+}
+
+/*
+ * No zoom when a field is focused. Take two.
+ *
+ * There is already a rule for this up in @layer base, and it has never once
+ * worked. `input { font-size: 16px }` has specificity 0,0,1 and every field in
+ * this app carries a Tailwind class — `text-sm`, `text-[0.95rem]` — at 0,1,0.
+ * The class wins, the field stays at 15.2px, and iOS zooms the page every time
+ * someone taps the chat composer.
+ *
+ * `input[class]` is the same element with an attribute selector: 0,1,1, which
+ * beats the utility class without !important and without touching a single
+ * component. Sitting outside the layers so ordering favours it too.
+ *
+ * Every touch device, not just the app — mobile Safari has exactly the same
+ * behaviour and those visitors deserve the fix as much as anyone.
+ */
+@supports (-webkit-touch-callout: none) {
+  input[class],
+  textarea[class],
+  select[class] {
+    font-size: 16px;
+  }
+}
+
+/*
+ * No double-tap zoom on the page itself. It was already set on buttons and
+ * links; a quick double tap while reading still zoomed. Pinch-to-zoom is
+ * deliberately untouched — someone who needs larger text keeps it.
+ */
+[data-native="true"] body {
+  touch-action: manipulation;
 }
 
 /*
